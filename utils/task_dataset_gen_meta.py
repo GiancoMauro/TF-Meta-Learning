@@ -10,18 +10,19 @@ class Dataset:
     # This class facilitates the creation of a few-shot dataset
     """
 
-    def __init__(self, training, config):
+    def __init__(self, training, config, classes):
         """
         # Iterate over the dataset to get each individual image and its class, and put that data into a dictionary.
 
         :param training: if True considers the dataset as training
         :param config: configuration file with training and dataset information
+        :param classes: number of ways of the experiment
         """
 
         self.x_size_image = config["x_size_image"]
         self.y_size_image = config["y_size_image"]
         self.channels = config["image_channels"]
-        self.classes = config["classes"]
+        self.classes = classes
         self.classes_tags = config["classes_tags"]
 
         self.gen_labels = [str(lab) for lab in range(self.classes)]

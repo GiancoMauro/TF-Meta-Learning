@@ -1,6 +1,7 @@
 {
-	"training_data_folder": "data/omniglot/images_background",
-	"test_data_folder": "data/omniglot/images_evaluation",
+	"name_dataset": "Omniglot",
+	"training_data_folder": "../data/omniglot/images_background",
+	"test_data_folder": "../data/omniglot/images_evaluation",
 	"x_size_image" : 105,
 	"y_size_image" : 105,
 	"image_channels" : 1,

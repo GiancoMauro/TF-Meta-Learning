@@ -2,3 +2,6 @@ data/images_background/
 data/images_evaluation/
 
 *.png
+*.h5
+*.pdf
+*.txt

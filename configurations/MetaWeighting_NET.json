@@ -1,0 +1,9 @@
+{
+	"algorithm_name": "Meta Weighting Net",
+	"meta_batches": 1,
+	"feature_dimension": 64,
+	"weighting_dimension": 16,
+	"base_train_epochs": 1,
+	"outer_learning_rate": 0.0005,
+	"internal_learning_rate": 0.0005
+}
