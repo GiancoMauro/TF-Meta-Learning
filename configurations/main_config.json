@@ -1,0 +1,15 @@
+{
+	"meta_iters": 50,
+	"classes": 5,
+	"support_train_shots": 1,
+	"test_shots": 10,
+	"query_shots": 1,
+	"beta1": 0,
+	"beta2": 0.5,
+	"eval_batch_size": 2,
+	"eval_interval": 1,
+	"num_boxplots": 2,
+	"number_of_evaluations_final": 10,
+	"num_exp_repetitions": 1
+}
+
