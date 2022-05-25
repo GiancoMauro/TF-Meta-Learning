@@ -74,13 +74,6 @@ plot_config_file = Path(plot_config_file)
 
 plot_config = read_json(plot_config_file)
 
-# Load font sizes:
-sup_title_font_size = plot_config["sup_title_font_size"]
-title_font_size = plot_config["title_font_size"]
-labels_font_size = plot_config["labels_font_size"]
-text_font_size = plot_config["text_font_size"]
-starting_font_size = plot_config["starting_font_size"]
-
 ### Meta related parameters ##
 meta_batches = spec_config["meta_batches"]
 outer_learning_rate = spec_config["outer_learning_rate"]
@@ -125,9 +118,6 @@ for counter, multiple in enumerate(xbox_multiples):
         xbox_labels.append(str(multiple) + "-" + str(xbox_multiples[counter + 1] - 1))
 
 print("Box Plots: " + str(xbox_labels))
-
-# Load font sizes:
-plt.rcParams.update({'font.size': starting_font_size})
 
 train_dataset = Dataset(training=True, config=dataset_config, classes=classes)
 test_dataset = Dataset(training=False, config=dataset_config, classes=classes)

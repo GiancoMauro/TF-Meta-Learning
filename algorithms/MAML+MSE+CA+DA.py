@@ -1,10 +1,4 @@
-# The Reptile algorithm was developed by OpenAI to perform model agnostic meta-learning. Specifically, this algorithm
-# was designed to quickly learn to perform new tasks with minimal training (few-shot learning). The algorithm works
-# by performing Stochastic Gradient Descent using the difference between weights trained on a mini-batch of never
-# before seen data and the model weights prior to training over a fixed number of episodes.
-
 import json
-import matplotlib.pyplot as plt
 import numpy as np
 import os
 from pathlib import Path
@@ -44,6 +38,8 @@ boxes_eval = int(round(episodes / num_box_plots))
 
 # inner loop - training on tasks number of shots (samples per class in mini-batch)
 support_train_shots = main_config["support_train_shots"]  # inner_shots
+# number of query shots for MAML algorithm during the training phase
+query_shots = main_config["query_shots"]  # IMPORTANT: USED ALSO IN EVALUATION PHASE
 
 # Num of test samples for evaluation per class. Tot Samples = (num of classes * eval_test_shots). Default 1
 test_shots = main_config["test_shots"]
@@ -64,7 +60,7 @@ dataset_config_file = Path(dataset_config_file)
 
 dataset_config = read_json(dataset_config_file)
 
-spec_config_file = "../configurations/Reptile.json"
+spec_config_file = "../configurations/MAML+MSE+CA+DA.json"
 spec_config_file = Path(spec_config_file)
 
 spec_config = read_json(spec_config_file)
@@ -74,8 +70,8 @@ Algorithm_name = spec_config["algorithm_name"] + "_"
 # inner loop learning rate of the Adam optimizer:
 internal_learning_rate = spec_config["internal_learning_rate"]
 
-# step size for weights update over the mini-batch iterations. Bigger it is, bigger are the meta step updates..
-meta_step_size = spec_config["meta_step_size"]  # outer step size -- learning importance over meta steps
+# ### META LEARNING ADAPTIVE RATE INSTEAD OF OUTER ADAM ##
+initial_outer_learning_rate = spec_config["initial_outer_learning_rate"]
 
 # size of the training and evaluation batches (independent by the number of sample per class)
 batch_size = spec_config["batch_size"]
@@ -86,10 +82,24 @@ base_train_epochs = spec_config["base_train_epochs"]  # (inner_iters per new tas
 # how many training repetitions over the mini-batch in evaluation phase?  EVAL TASK
 eval_train_epochs = spec_config["eval_train_epochs"]
 
+# for CA
+decay_steps = spec_config["decay_steps"]
+# base weights for MSL
+loss_weights = spec_config["initial_loss_weights"]
+
 plot_config_file = "../configurations/general_config/plot_config.json"
 plot_config_file = Path(plot_config_file)
 
 plot_config = read_json(plot_config_file)
+
+if (classes * support_train_shots) % batch_size == 0:
+    # even batch size
+    num_batches_per_inner_base_epoch = (classes * support_train_shots) / batch_size
+else:
+    num_batches_per_inner_base_epoch = round((classes * support_train_shots) / batch_size) + 1
+
+# total number of batches for every meta iteration: needed for BNRS + BNWB
+tot_num_base_batches = base_train_epochs * num_batches_per_inner_base_epoch
 
 xbox_multiples = []
 xbox_labels = []
@@ -119,6 +129,9 @@ print("Box Plots: " + str(xbox_labels))
 train_dataset = Dataset(training=True, config=dataset_config, classes=classes)
 test_dataset = Dataset(training=False, config=dataset_config, classes=classes)
 
+# uncomment to show the picture of the model
+# visualkeras.layered_view(base_model, legend=True).show()
+
 for experim_num in range(experiments_num):
 
     base_model = conv_base_model(dataset_config, spec_config, classes)
@@ -126,59 +139,146 @@ for experim_num in range(experiments_num):
     base_model.summary()
     optimizer = keras.optimizers.Adam(learning_rate=internal_learning_rate, beta_1=beta1, beta_2=beta2)
 
+    inner_optimizer = keras.optimizers.Adam(learning_rate=internal_learning_rate, beta_1=beta1, beta_2=beta2)
+
+    outer_learning_rate_schedule = tf.keras.experimental.CosineDecay(initial_outer_learning_rate, decay_steps)
+
+    outer_optimizer = keras.optimizers.Adam(learning_rate=outer_learning_rate_schedule, beta_1=beta1, beta_2=beta2)
+
+    ############### MAML IMPLEMENTATION LOOP ##########################à
     general_training_val_acc = []
     general_eval_val_acc = []
     training_val_acc = []
     eval_val_acc = []
     buffer_training_val_acc = []
     buffer_eval_val_acc = []
-    ##### episodes loop #####
+    # Step 2: instead of checking for convergence, we train for a number
+    # of epochs
+    total_loss = 0
+    losses = []
 
-    for episode in range(episodes):
+    # Step 3 and 4
+    # query_loss_sum is the summation of losses over time for the size of meta_batches
+    query_loss_sum = tf.zeros(classes * query_shots)
+    # query loss partial sum is the average of the loss over the inner meta_batches
+    query_loss_partial_sum = tf.zeros(classes * query_shots)
+    for episode in range(0, episodes):
         print(episode)
-        frac_done = episode / episodes
-        cur_meta_step_size = (1 - frac_done) * meta_step_size
-        # Temporarily save the weights from the model.
+        # the dataset to contains support and query
+        mini_support_dataset, _, _, query_images, query_labels, tsk_labels = train_dataset.get_mini_dataset(
+            batch_size, base_train_epochs, support_train_shots, classes, query_split=True, query_sho=query_shots)
+
+        # MSL ANNEALING IN META EPOCHS:
+        if episode == round(episodes / 4):
+            loss_weights = [0.01, 0.03, 0.10, 0.88]
+        if episode == round(episodes / 2):
+            loss_weights = [0.001, 0.004, 0.045, 0.95]
+        if episode == round(3 * episodes / 4):
+            loss_weights = [0, 0.002, 0.008, 0.99]
+        # weights are normalized to Sum: 1
+        epochs_counter = 0
+        inner_batches_counter = 0
+        # IMPORTANT, in MAML, the external update depends by the weighted sum of the loss over epochs
         old_vars = base_model.get_weights()
-        # Get a sample from the full dataset.
-        mini_dataset = train_dataset.get_mini_dataset(
-            batch_size, base_train_epochs, support_train_shots, classes
-        )
-        for images, labels in mini_dataset:
-            # for each data batch
-            with tf.GradientTape() as tape:
-                # random initialization of weights
-                preds = base_model(images)
-                loss = keras.losses.sparse_categorical_crossentropy(labels, preds)
-            grads = tape.gradient(loss, base_model.trainable_weights)
-            optimizer.apply_gradients(zip(grads, base_model.trainable_weights))
-        new_vars = base_model.get_weights()
-        # Perform optimization for the meta step. Use the final weights obtained after N inner batches
-        for var in range(len(new_vars)):
-            new_vars[var] = old_vars[var] + (
-                    (new_vars[var] - old_vars[var]) * cur_meta_step_size
-            )
-        # After the meta-learning step, reload the newly-trained weights into the model.
-        base_model.set_weights(new_vars)
+        for images, labels in mini_support_dataset:
+            if episode <= 50:  # (1/4) * episodes:
+                # print("FIRST ORDER")
+                # 1st ORDER MAML
+
+                # Step 5
+                with tf.GradientTape() as train_tape:
+                    support_preds = base_model(images)
+                    train_loss = keras.losses.sparse_categorical_crossentropy(labels, support_preds)
+                # Step 6
+
+                gradients = train_tape.gradient(train_loss, base_model.trainable_variables)
+                inner_optimizer.apply_gradients(zip(gradients, base_model.trainable_weights))
+                with tf.GradientTape() as test_tape:
+                    # Step 8
+                    # compute the model loss over different images (query data)
+                    # evaluate model trained on theta' over the query images
+                    query_preds = base_model(query_images)
+                    query_loss = keras.losses.sparse_categorical_crossentropy(query_labels, query_preds)
+                    # sum the meta loss for the outer learning every N defined Meta Batches
+                    query_loss_partial_sum = query_loss_partial_sum + query_loss * loss_weights[epochs_counter]
+
+                    if inner_batches_counter == num_batches_per_inner_base_epoch - 1:
+                        # if i'm in the last inner batch, then average the query_loss_sum over the performed batches
+                        query_loss_sum += query_loss_partial_sum / num_batches_per_inner_base_epoch
+                        # reset the query loss partial sum over inner meta_batches
+                        query_loss_partial_sum = tf.zeros(classes * query_shots)
+            else:
+                # print("SECOND ORDER")
+                # 2nd Order MAML
+
+                with tf.GradientTape() as test_tape:
+                    # Step 5
+                    with tf.GradientTape() as train_tape:
+                        support_preds = base_model(images)
+                        train_loss = keras.losses.sparse_categorical_crossentropy(labels, support_preds)
+
+                    # Step 6
+                    gradients = train_tape.gradient(train_loss, base_model.trainable_variables)
+                    # Internal Lr = External
+                    inner_optimizer.apply_gradients(zip(gradients, base_model.trainable_weights))
+                    # for all the weights: *weights = weights - learning rate*(Delta update)
+
+                    # Step 8
+                    # compute the model loss over different images (query data)
+                    # evaluate model trained on theta' over the query images
+                    query_preds = base_model(query_images)
+                    query_loss = keras.losses.sparse_categorical_crossentropy(query_labels, query_preds)
+                    # sum the meta loss for the outer learning every N defined epochs
+                    query_loss_partial_sum = query_loss_partial_sum + query_loss * loss_weights[epochs_counter]
+                    # since the sum of the loss weights is one, no division of the query loss over inner epochs is 
+                    # needed 
+
+                    if inner_batches_counter == num_batches_per_inner_base_epoch - 1:
+                        # if i'm in the last inner batch, then average the query_loss_sum over the performed batches
+                        query_loss_sum += query_loss_partial_sum / num_batches_per_inner_base_epoch
+                        # reset the query loss partial sum over inner inner_batches
+                        query_loss_partial_sum = tf.zeros(classes * query_shots)
+
+            inner_batches_counter += 1
+
+            if inner_batches_counter == num_batches_per_inner_base_epoch:
+                # update the current epochs weight
+                epochs_counter += 1
+                inner_batches_counter = 0
+
+        # go back on theta parameters for the update after THE INNER LOOP
+        # META UPDATE IS DONE EVERY DEFINED NUM OF INNER EPOCHS
+        base_model.set_weights(old_vars)
+
+        # UPDATE USING THE WEIGHTED SUM OVER INNER LOOPS
+        gradients = test_tape.gradient(query_loss_sum, base_model.trainable_variables)
+        outer_optimizer.apply_gradients(zip(gradients, base_model.trainable_variables))
+        # empty the query_loss_sum for a new batch
+        query_loss_sum = tf.zeros(classes * query_shots)
+        # Step 8
+        # is it keeping track of the losses on time?
+
         # Evaluation loop
         if episode % eval_interval == 0:
             if (episode in xbox_multiples or episode == episodes - 1) and episode != 0:
                 # when I have enough samples for a box of the box-range plot, add these values to the general list
-                # condition: the meta iter is a multiple of the x_box multiples or last iteration and meta_iter is
-                # not 0.
+                # condition: the meta iter is a multiple of the x_box multiples or last iteration and episode is not 0.
                 general_training_val_acc.append(buffer_training_val_acc)
                 general_eval_val_acc.append(buffer_eval_val_acc)
+                # print("before:" + str(general_training_val_acc))
                 buffer_training_val_acc = []
                 buffer_eval_val_acc = []
+                # print("after:" + str(general_training_val_acc))
 
             accuracies = []
             for dataset in (train_dataset, test_dataset):
-                # set it to zero for validation and then test)
+                # set it to zero for validation and then test
                 num_correct = 0
                 # Sample a mini dataset from the full dataset.
                 train_set, _, _, test_images, test_labels, task_labels = dataset.get_mini_dataset(
                     batch_size, eval_train_epochs, support_train_shots, classes, test_split=True,
                     testing_sho=test_shots)
+                # print(train_set)
 
                 old_vars = base_model.get_weights()
                 # Train on the samples and get the resulting accuracies.
@@ -187,7 +287,7 @@ for experim_num in range(experiments_num):
                         preds = base_model(images)
                         loss = keras.losses.sparse_categorical_crossentropy(labels, preds)
                     grads = tape.gradient(loss, base_model.trainable_weights)
-                    optimizer.apply_gradients(zip(grads, base_model.trainable_weights))
+                    inner_optimizer.apply_gradients(zip(grads, base_model.trainable_weights))
 
                 # test phase after model evaluation
                 eval_preds = base_model.predict(test_images)
@@ -202,7 +302,6 @@ for experim_num in range(experiments_num):
                 base_model.set_weights(old_vars)
                 # for both validation and testing, accuracy is done over the length of test samples
                 accuracies.append(num_correct / len(test_labels))
-
             # meta learning test after validation => Validation because it's done on training images not used in the
             # train
             training_val_acc.append(accuracies[0])
@@ -268,14 +367,14 @@ for experim_num in range(experiments_num):
     generate_text_logs(Algorithm_name, new_directory, xbox_labels, episodes, train_eval_boxes, test_eval_boxes,
                        general_training_val_acc, general_eval_val_acc)
 
-    ############ EVALUATION OVER FINAL TASKS ###############
-
     test_accuracy = []
 
     base_weights = base_model.get_weights()
 
     time_stamps_adaptation = []
     time_stamps_single_pred = []
+
+    inner_optimizer = keras.optimizers.Adam(learning_rate=internal_learning_rate, beta_1=beta1, beta_2=beta2)
 
     for task_num in range(0, number_of_evaluations):
 
@@ -289,7 +388,7 @@ for experim_num in range(experiments_num):
                 preds = base_model(images)
                 loss = keras.losses.sparse_categorical_crossentropy(labels, preds)
             grads = tape.gradient(loss, base_model.trainable_weights)
-            optimizer.apply_gradients(zip(grads, base_model.trainable_weights))
+            inner_optimizer.apply_gradients(zip(grads, base_model.trainable_weights))
         adaptation_end = time.time()
         time_stamps_adaptation.append(adaptation_end - adaptation_start)
         # predictions for the task
@@ -327,9 +426,9 @@ for experim_num in range(experiments_num):
 
     final_accuracy_filename = Algorithm_name + str(number_of_evaluations) + " Test Tasks_FINAL_ACCURACY.txt"
 
-    final_accuracy_string = "The average accuracy on: " + str(number_of_evaluations) + \
-                            " Test Tasks, with: " + str(test_shots) + "samples per class, is: " \
-                            + str(total_accuracy) + "% with a 95% confidence interval of +- " + str(h * 100) + "%"
+    final_accuracy_string = "The average accuracy on: " + str(number_of_evaluations) + " Test Tasks, with: " + str(
+        test_shots) + "samples per class, is: " + str(total_accuracy) + \
+                            "% with a 95% confidence interval of +- " + str(h * 100) + "% "
 
     final_accuracy_string += "\n" + "The latency time for a final training is: " \
                              + str(ms_latency) + " milliseconds"

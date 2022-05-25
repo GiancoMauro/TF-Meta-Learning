@@ -24,7 +24,9 @@ def generate_box_plot(config, alg_name, classes, meta_iters, new_directory, xbox
     sup_title_font_size = config["sup_title_font_size"]
     title_font_size = config["title_font_size"]
     labels_font_size = config["labels_font_size"]
+    starting_font_size = config["starting_font_size"]
 
+    plt.rcParams.update({'font.size': starting_font_size})
     # plot boxplot
     fig1, axs = plt.subplots(2)
     fig1.set_figheight(17)
