@@ -5,3 +5,4 @@ data/images_evaluation/
 *.h5
 *.pdf
 *.txt
+results/
