@@ -55,7 +55,7 @@ dataset_config_file = Path(dataset_config_file)
 
 dataset_config = read_json(dataset_config_file)
 
-spec_config_file = "../configurations/Weighting_Net.json"
+spec_config_file = "../configurations/Injection_Weighting_Net.json"
 spec_config_file = Path(spec_config_file)
 
 spec_config = read_json(spec_config_file)
