@@ -1,5 +1,29 @@
+"""
+Author: Gianfranco Mauro
+Tensorflow Implementation of the algorithm:
+"Injection-Weighting-Net".
+Mauro, Martinez-Rodriguez, Ott, Servadei, Cuellar and Morales-Santos.
+"Context-Adaptable Radar-Based People Counting with Self-Learning."
+
+Base Implementation from pytorch versions:
+
+"User-definable Dynamic Hand Gesture Recognition Based on Doppler Radar and Few-shot Learning"
+Zeng, Xianglong, Chaoyang Wu, and Wen-Bin Ye.
+"User-Definable Dynamic Hand Gesture Recognition Based on Doppler Radar and Few-Shot Learning."
+IEEE Sensors Journal 21.20 (2021): 23224-23233.
+
+https://github.com/AGroupofProbiotocs/WeighingNet
+
+and:
+
+"Learning to Compare: Relation Network for Few-Shot Learning"
+Sung, Flood, et al. "Learning to compare: Relation network for few-shot learning."
+Proceedings of the IEEE conference on computer vision and pattern recognition. 2018.
+
+https://github.com/floodsung/LearningToCompare_FSL
+"""
+
 import json
-import matplotlib.pyplot as plt
 import numpy as np
 import os
 from pathlib import Path

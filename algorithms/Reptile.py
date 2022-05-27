@@ -1,7 +1,13 @@
-# The Reptile algorithm was developed by OpenAI to perform model agnostic meta-learning. Specifically, this algorithm
-# was designed to quickly learn to perform new tasks with minimal training (few-shot learning). The algorithm works
-# by performing Stochastic Gradient Descent using the difference between weights trained on a mini-batch of never
-# before seen data and the model weights prior to training over a fixed number of episodes.
+"""
+Author: Gianfranco Mauro
+Partial testing re-implementation of the Algorithm:
+"On First-Order Meta-Learning Algorithms".
+Nichol, Alex, Joshua Achiam, and John Schulman.
+"On first-order meta-learning algorithms." arXiv preprint arXiv:1803.02999 (2018).
+
+Original Implementation from Keras: ADMoreau: Few-Shot learning with Reptile
+https://keras.io/examples/vision/reptile/
+"""
 
 import json
 import matplotlib.pyplot as plt

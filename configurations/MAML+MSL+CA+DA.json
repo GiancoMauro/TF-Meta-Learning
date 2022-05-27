@@ -1,5 +1,5 @@
 {
-	"algorithm_name": "MAML+MSE+CA+DA",
+	"algorithm_name": "MAML+MSL+CA+DA",
 	"batch_size": 2,
 	"base_train_epochs": 4,
 	"eval_train_epochs": 8,
