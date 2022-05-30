@@ -1,9 +1,9 @@
 {
 	"name_dataset": "Omniglot",
-	"training_data_folder": "../data/omniglot_resized/images_background",
-	"test_data_folder": "../data/omniglot_resized/images_evaluation",
-	"x_size_image" : 50,
-	"y_size_image" : 50,
+	"training_data_folder": "../data/omniglot/images_background",
+	"test_data_folder": "../data/omniglot/images_evaluation",
+	"x_size_image" : 105,
+	"y_size_image" : 105,
 	"image_channels" : 1,
 	"classes_tags": ["Alphabet_of_the_Magi/character01", "Alphabet_of_the_Magi/character02",
 		"Alphabet_of_the_Magi/character03", "Alphabet_of_the_Magi/character04",

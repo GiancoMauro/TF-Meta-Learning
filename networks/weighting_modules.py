@@ -12,33 +12,34 @@ class Injection_Module(tf.keras.Model, ABC):
     def __init__(self, feature_dimension):
         super(Injection_Module, self).__init__()
         self.layer1 = tf.keras.Sequential([
-            tf.keras.layers.Conv2D(filters=64, kernel_size=4, padding="valid"),  # kernel_initializer=initializer),
+            tf.keras.layers.Conv2D(filters=64, kernel_size=2, padding="valid"),  # kernel_initializer=initializer),
             tf.keras.layers.BatchNormalization(momentum=1),
             tf.keras.layers.ReLU(),
             tf.keras.layers.MaxPool2D(2)])
         self.layer2 = tf.keras.Sequential([
-            tf.keras.layers.Conv2D(filters=64, kernel_size=4, padding="valid"),  # kernel_initializer=initializer),
+            tf.keras.layers.Conv2D(filters=64, kernel_size=3, padding="valid"),  # kernel_initializer=initializer),
             tf.keras.layers.BatchNormalization(momentum=1),
             tf.keras.layers.ReLU(),
             tf.keras.layers.MaxPool2D(2)])
         self.layer3 = tf.keras.Sequential([
-            tf.keras.layers.Conv2D(filters=64, kernel_size=(4, 5), padding="valid"),
-            tf.keras.layers.ZeroPadding2D(1),
+            tf.keras.layers.Conv2D(filters=64, kernel_size=2, padding="valid"),
             tf.keras.layers.BatchNormalization(momentum=1),
             tf.keras.layers.ReLU()])
         self.layer4 = tf.keras.Sequential([
             tf.keras.layers.Conv2D(
-                filters=feature_dimension, kernel_size=(5, 4), padding="valid"),
+                filters=feature_dimension, kernel_size=3, padding="valid"),
             tf.keras.layers.BatchNormalization(momentum=1),
             tf.keras.layers.ReLU(name="embedding")])
 
     def call(self, inp):
-        # input shape: (?, 50, 50, 1)
+        # input shape: (?, 105, 105, 1)
+        print(inp.shape)
         out = self.layer1(inp)
         out = self.layer2(out)
         out = self.layer3(out)
         out = self.layer4(out)
-        # features representation: (?, 5, 5, emb_size)
+        print(out.shape)
+        # features representation: (?, 22, 22, emb_size)
         return out
 
 
@@ -67,7 +68,7 @@ class Comparison_Module(tf.keras.Model, ABC):
         ])
 
     def call(self, inp, num_train_shots):
-        # Support-Query Concat: (?, (2*emb_size), 5, 5)
+        # Support-Query Concat: (?, (2*emb_size), 22, 22)
         out = self.layer1(inp)
         out = self.layer2(out)
         # Post Global Avg Pooling: (?, emb_size)
@@ -115,7 +116,7 @@ class Full_Pipeline(tf.keras.Model, ABC):
 
         support_features = self.injection_model(support_samples)
 
-        # support features shape: (?, 5, 5, emb_size)
+        # support features shape: (?, 22, 22, emb_size)
         if multi_query:
             # if more than 1 query, the support have to be replicated N times respect to the number of query shots
             support_features_ext = tf.repeat(tf.expand_dims(support_features, 0), num_shots_qr_ts * batch_s, axis=0)
@@ -123,14 +124,14 @@ class Full_Pipeline(tf.keras.Model, ABC):
             # single prediction
             support_features_ext = tf.expand_dims(support_features, 0)
 
-        # extended support shape: (?, N_query_shots * batch_size, 9, 9, emb_size)
+        # extended support shape: (?, N_query_shots * batch_size, 22, 22, emb_size)
         query_features = tf.stop_gradient(self.injection_model(query_input))  # no backprop here
         # extend the query for the number of classes (1-support each class)
         query_features_ext = tf.repeat(tf.expand_dims(query_features, 0), num_shots_tr * self.classes, axis=0)
         query_features_ext = tf.experimental.numpy.moveaxis(query_features_ext, 0, 1)
-        # extended query shape: (?, N_shots * N_ways, 9, 9, emb_size)
+        # extended query shape: (?, N_shots * N_ways, 22, 22, emb_size)
         comparison_features = self.concat([support_features_ext, query_features_ext])
-        comparison_features = tf.reshape(comparison_features, [-1, self.feature_dimension * 2, 5, 5])
+        comparison_features = tf.reshape(comparison_features, [-1, self.feature_dimension * 2, 22, 22])
         # comparison output shape: (?/N_shots, N_Ways * emb_size)
         weighting_features = self.comparison_model(comparison_features, num_shots_tr)
 
