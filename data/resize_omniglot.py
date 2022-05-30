@@ -3,16 +3,15 @@ import glob
 
 # add omniglot data in the /data folder. Change main_path whether needed.
 
-main_path = "/omniglot"
+main_path = "/omniglot/"
 
 background_eval_paths = glob.glob(main_path + '*')
 
-all_characters_paths = []
 all_images = []
 
 for dataset_path in background_eval_paths:
 
-    all_alphabet_paths = glob.glob(main_path + '*')
+    all_alphabet_paths = glob.glob(dataset_path.replace("\\", "/") + "/" + '*')
 
     for alphabet_path in all_alphabet_paths:
 
@@ -23,7 +22,6 @@ for dataset_path in background_eval_paths:
             examples_paths = glob.glob(character_path.replace("\\", "/") + "/" + '*')
 
             for example_path in examples_paths:
-
                 all_images.append(example_path)
 
 
