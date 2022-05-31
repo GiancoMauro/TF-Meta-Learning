@@ -150,9 +150,9 @@ train_dataset = Dataset(training=True, config=dataset_config, classes=classes)
 test_dataset = Dataset(training=False, config=dataset_config, classes=classes)
 
 if is_injection:
-    Algorithm_name += "_Injection_"
+    Algorithm_name += "Injection_"
 else:
-    Algorithm_name += "_Embedding_"
+    Algorithm_name += "Embedding_"
 
 Algorithm_name += str(classes) + "_Classes_"
 
