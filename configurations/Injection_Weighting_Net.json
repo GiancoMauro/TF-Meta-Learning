@@ -1,6 +1,0 @@
-{
-	"algorithm_name": "Injection Weighting Net",
-	"feature_dimension": 32,
-	"weighting_dimension": 16,
-	"internal_learning_rate": 0.0005
-}

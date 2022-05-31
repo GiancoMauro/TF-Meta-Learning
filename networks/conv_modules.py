@@ -1,6 +1,7 @@
 from tensorflow.keras import layers
 from tensorflow import keras
 
+
 def conv_bn(x_l, filt_num=128, kern_size=3, stride=2, gaussian_noise=False):
     """
     Definition of the single convolutional layer for the model in the internal loop

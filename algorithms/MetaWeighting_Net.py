@@ -86,9 +86,12 @@ spec_config = read_json(spec_config_file)
 
 Algorithm_name = spec_config["algorithm_name"] + "_"
 
-# feature dimension for the Embedding Module of Weighting Nets.
-feature_dimension = spec_config["feature_dimension"]
+# embedding dimension for the Embedding/Injection Module of Weighting Nets.
+embedding_dimension = spec_config["embedding_dimension"]
 weighting_dim = spec_config["weighting_dimension"]
+
+# is a simulation with injection module?
+is_injection = spec_config["injection_module"]
 
 # inner loop learning rate of the Adam optimizer:
 internal_learning_rate = spec_config["internal_learning_rate"]
@@ -146,11 +149,16 @@ print("Box Plots: " + str(xbox_labels))
 train_dataset = Dataset(training=True, config=dataset_config, classes=classes)
 test_dataset = Dataset(training=False, config=dataset_config, classes=classes)
 
+if is_injection:
+    Algorithm_name += "_Injection_"
+else:
+    Algorithm_name += "_Embedding_"
+
 Algorithm_name += str(classes) + "_Classes_"
 
 for experim_num in range(experiments_num):
 
-    full_pipeline_model = Full_Pipeline(classes, feature_dimension, weighting_dim)
+    full_pipeline_model = Full_Pipeline(classes, embedding_dimension, weighting_dim, is_injection=is_injection)
 
     inner_optimizer = keras.optimizers.Adam(learning_rate=internal_learning_rate, beta_1=beta1, beta_2=beta2)
 
