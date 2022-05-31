@@ -125,6 +125,8 @@ print("Box Plots: " + str(xbox_labels))
 train_dataset = Dataset(training=True, config=dataset_config, classes=classes)
 test_dataset = Dataset(training=False, config=dataset_config, classes=classes)
 
+Algorithm_name += str(classes) + "_Classes_"
+
 for experim_num in range(experiments_num):
 
     base_model = conv_base_model(dataset_config, spec_config, classes)
@@ -226,8 +228,6 @@ for experim_num in range(experiments_num):
 
     if not os.path.exists("../results/"):
         os.mkdir("../results/")
-
-    Algorithm_name += str(classes) + "_Classes_"
 
     new_directory = "../results/" + Algorithm_name + str(support_train_shots) + "_Shots_" + \
                     str(episodes) + "_Episodes_" + str(experim_num) + "_simul_num"
