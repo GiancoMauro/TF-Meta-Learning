@@ -8,3 +8,6 @@ data/images_evaluation/
 results/
 networks/weighting_modules_backup_105.py
 networks/weighting_modules_resized_50.py
+data/resize_omniglot_pers.py
+networks/weighting_modules_temp_size.py
+networks/__pycache__/weighting_modules_temp_size.cpython-36.pyc

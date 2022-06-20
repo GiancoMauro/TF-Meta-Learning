@@ -1,7 +1,7 @@
 from abc import ABC
 import tensorflow as tf
 
-# default embedding_dim = 64
+# default embedding_dim = 32
 
 
 class Injection_Module(tf.keras.Model, ABC):
