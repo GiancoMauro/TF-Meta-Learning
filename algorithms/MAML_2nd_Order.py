@@ -3,7 +3,7 @@ Author: Gianfranco Mauro
 2nd Order Tensorflow Implementation of the algorithm:
 "Model-Agnostic Meta-Learning for Fast Adaptation of Deep Networks".
 Finn, Chelsea, Pieter Abbeel, and Sergey Levine. "Model-agnostic meta-learning for fast adaptation of deep networks."
-International conference on machine learning. PMLR, 2017."
+"International conference on machine learning. PMLR, 2017."
 
 https://github.com/cbfinn/maml
 """
@@ -16,7 +16,9 @@ import re
 import tensorflow as tf
 from tensorflow import keras
 import time
+import sys
 import warnings
+sys.path.append("../")
 from networks.conv_modules import conv_base_model
 from utils.box_plot_function import generate_box_plot
 from utils.json_functions import read_json

@@ -1,7 +1,10 @@
 from pathlib import Path
-from utils.json_functions import read_json
+import sys
 import numpy as np
 import os
+sys.path.append("../")
+from utils.json_functions import read_json
+
 
 dataset_config_file = "../configurations/dataset_config.json"
 dataset_config_file = Path(dataset_config_file)

@@ -18,13 +18,16 @@ import re
 import tensorflow as tf
 from tensorflow import keras
 import time
+import sys
 import warnings
+sys.path.append("../")
 from networks.conv_modules import conv_base_model
 from utils.box_plot_function import generate_box_plot
 from utils.json_functions import read_json
 from utils.statistics import mean_confidence_interval
 from utils.task_dataset_gen_meta import Dataset
 from utils.text_log_function import generate_text_logs
+
 
 main_config_file = "../configurations/main_config.json"
 main_config_file = Path(main_config_file)

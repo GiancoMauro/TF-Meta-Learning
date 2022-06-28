@@ -16,7 +16,9 @@ import re
 import tensorflow as tf
 from tensorflow import keras
 import time
+import sys
 import warnings
+sys.path.append("../")
 from networks.conv_modules import conv_base_model
 from utils.box_plot_function import generate_box_plot
 from utils.json_functions import read_json
