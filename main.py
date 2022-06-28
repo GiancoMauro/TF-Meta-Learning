@@ -113,6 +113,7 @@ if __name__ == "__main__":
     n_episodes = int(args.n_episodes)
     # number of query shots for the algorithm during the training phase
     n_query = int(args.n_query)
+    # number of final evaluations of the algorithm
     n_fin_episodes = int(args.n_fin_episodes)
     # number of times that the experiment has to be repeated
     n_repeats = int(args.n_repeats)
@@ -171,11 +172,20 @@ if __name__ == "__main__":
     ### INIT ALGORITHM
     if alg_name == "weight_net":
         algorithm = Weighting_Net(n_shots, n_ways, n_episodes, n_query, n_tests, train_dataset, test_dataset,
-                                  n_repeats, n_box_plots, n_fin_episodes, eval_inter, beta_1, beta_2, xbox_multiples)
+                                  n_repeats, n_box_plots, eval_inter, beta_1, beta_2, xbox_multiples)
     else:
         algorithm = []
         input()
 
+    # add general variables to a main configuration for the log files
+    main_config = algorithm.spec_config.copy()
+
+    main_config["n_shots"] = n_shots
+    main_config["n_ways"] = n_ways
+    main_config["n_episodes"] = n_episodes
+    main_config["n_query"] = n_query
+    main_config["n_tests"] = n_tests
+    main_config["n_fin_episodes"] = n_fin_episodes
     # TRAIN MODEL FOR N REPETITIONS:
     for repeat in range(n_repeats):
 
@@ -212,16 +222,12 @@ if __name__ == "__main__":
             new_directory + "/full_model_weights_" + alg_name + "_" + str(n_episodes) + ".h5")
 
         #######################
-        main_config_file_name = new_directory + "/" + "main_config.json"
-        alg_config_file_name = new_directory + "/" + alg_name + "_" + str(n_episodes) + "_config.json"
+        main_config_file_name = new_directory + "/" + "config.json"
 
         # SAVE CONFIGURATION FILES:
-        # todo
-        # with open(main_config_file_name, 'w') as f:
-        #     json.dump(main_config, f, indent=4)
 
-        with open(alg_config_file_name, 'w') as f:
-            json.dump(algorithm.spec_config, f, indent=4)
+        with open(main_config_file_name, 'w') as f:
+            json.dump(main_config, f, indent=4)
 
         ## GENERATE BOX PLOTS FOR TRAINING AND EVALUATION
 
@@ -236,7 +242,7 @@ if __name__ == "__main__":
 
         # FINAL TRAINING/TESTING ON EPISODES AFTER GENERALIZATION TRAINING
         # todo adapt it to the adaptation training of MAML (maybe set it as zero for the weighting network)
-        total_accuracy, h, ms_pred_latency = algorithm.final_evaluation(full_pipeline_model)
+        total_accuracy, h, ms_pred_latency = algorithm.final_evaluation(full_pipeline_model, n_fin_episodes)
 
         final_accuracy_filename = alg_name + str(n_fin_episodes) + " Test_Tasks_Final_Accuracy.txt"
 

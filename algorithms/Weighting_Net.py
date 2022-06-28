@@ -40,7 +40,7 @@ class Weighting_Net:
     """
 
     def __init__(self, n_shots, n_ways, n_episodes, n_query, n_tests, train_dataset, test_dataset,
-                 n_repeat, n_box_plots, n_fin_episodes, eval_inter, beta_1, beta_2, xbox_multiples):
+                 n_repeat, n_box_plots, eval_inter, beta_1, beta_2, xbox_multiples):
         # load standard configurations
 
         self.beta1 = beta_1
@@ -58,9 +58,6 @@ class Weighting_Net:
         self.query_shots = n_query
 
         self.test_shots = n_tests
-
-        # number of final evaluations of the algorithm
-        self.number_of_evaluations = n_fin_episodes
 
         spec_config_file = "configurations/Weighting_Net.json"
         spec_config_file = Path(spec_config_file)
@@ -84,7 +81,11 @@ class Weighting_Net:
         #                                                     distribution='truncated_normal', seed=None)
 
     def train_and_evaluate(self):
+        """
+        main function for the training and evaluation of the meta learning algorithm
 
+        :return: full_pipeline_model, general_training_val_acc, general_eval_val_acc
+        """
         if self.is_injection:
             self.alg_name += "Injection_"
         else:
@@ -183,8 +184,13 @@ class Weighting_Net:
 
         return full_pipeline_model, general_training_val_acc, general_eval_val_acc
 
-    def final_evaluation(self, full_pipeline_model):
-
+    def final_evaluation(self, full_pipeline_model, final_episodes):
+        """
+        Function that computes the performances of the generated generalization models of a set of final tasks
+        :param full_pipeline_model: generalization model
+        :param final_episodes: number of final episodes for the evaluation
+        :return: total_accuracy, h, ms_prediction_latency
+        """
         ############ EVALUATION OVER FINAL TASKS ###############
 
         # Evaluate the model over the defined number of tasks:
@@ -193,7 +199,7 @@ class Weighting_Net:
 
         time_stamps_single_pred = []
 
-        for task_num in range(0, self.number_of_evaluations):
+        for task_num in range(0, final_episodes):
 
             print("final task num: " + str(task_num))
             train_images_task, train_labels_task, test_images_task, test_labels_task, task_labs = \
@@ -201,7 +207,8 @@ class Weighting_Net:
                                                    testing_sho=self.test_shots)
 
             # predictions for the task
-            eval_preds = full_pipeline_model(train_images_task, test_images_task, self.support_train_shots, self.test_shots)
+            eval_preds = full_pipeline_model(train_images_task, test_images_task,
+                                             self.support_train_shots, self.test_shots)
 
             single_pred_start = time.time()
             pred_example = np.expand_dims(test_images_task[0], 0)
@@ -226,9 +233,9 @@ class Weighting_Net:
 
         test_accuracy, h = mean_confidence_interval(np.array(test_accuracy) / 100)
 
-        ms_pred_latency = np.mean(time_stamps_single_pred) * 1e3
+        ms_prediction_latency = np.mean(time_stamps_single_pred) * 1e3
 
-        return total_accuracy, h, ms_pred_latency
+        return total_accuracy, h, ms_prediction_latency
 
 
 # if __name__ == "__main__":
@@ -266,5 +273,5 @@ class Weighting_Net:
 #     classes = main_config["classes"]
 #
 #     # number of final evaluations of the algorithm
-#     number_of_evaluations = main_config["number_of_evaluations_final"]
+#     final_episodes = main_config["final_episodes_final"]
 
