@@ -32,8 +32,7 @@ Results is also automatically created after first experiment completion.
 
 # Code execution
 
-
-From terminal (Once defined the configurations): ```python "name```
+From terminal (Once defined the configurations): ```cd ./algorithms; python "ALGORITHM.py"``` where ```"```
 
 # Reference algorithms
 Reptile:

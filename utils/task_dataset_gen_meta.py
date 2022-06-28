@@ -93,7 +93,6 @@ class Dataset:
             # already provided ones such as the final task
             label_subset = self.classes_tags[np.asarray(task_labels_arr)]
 
-        # todo not really needed
         num_labels = np.asarray([self.classes_tags.index(elem) for elem in label_subset])
 
         # print("Subset: ", label_subset)
