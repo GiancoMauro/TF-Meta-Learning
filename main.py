@@ -13,7 +13,9 @@ from utils.box_plot_function import generate_box_plot
 from utils.json_functions import read_json
 from utils.statistics import mean_confidence_interval
 from utils.task_dataset_gen import Dataset
+from utils.task_dataset_gen_meta import Dataset_Meta
 from algorithms.Weighting_Net import Weighting_Net
+from algorithms.MetaWeighting_Net import MetaWeighting_Net
 from utils.text_log_function import generate_text_logs
 
 """
@@ -31,7 +33,7 @@ if __name__ == "__main__":
         "--alg",
         help="available meta learning algorithms [weight_net, meta_weight_net, reptile, maml2nd, maml1st, maml_plus]",
         type=str,
-        default="weight_net"
+        default="meta_weight_net"  # "weight_net"
     )
     parser.add_argument(
         "--n_ways",
@@ -160,8 +162,12 @@ if __name__ == "__main__":
 
     dataset_config = read_json(dataset_config_file)
 
-    train_dataset = Dataset(training=True, config=dataset_config, classes=n_ways)
-    test_dataset = Dataset(training=False, config=dataset_config, classes=n_ways)
+    if alg_name == "weight_net":
+        train_dataset = Dataset(training=True, config=dataset_config, classes=n_ways)
+        test_dataset = Dataset(training=False, config=dataset_config, classes=n_ways)
+    else:
+        train_dataset = Dataset_Meta(training=True, config=dataset_config, classes=n_ways)
+        test_dataset = Dataset_Meta(training=False, config=dataset_config, classes=n_ways)
 
     # LOAD PLOT CONFIGURATIONS:
     plot_config_file = "configurations/general_config/plot_config.json"
@@ -170,9 +176,12 @@ if __name__ == "__main__":
     plot_config = read_json(plot_config_file)
 
     ### INIT ALGORITHM
-    if alg_name == "weight_net":
+    if alg_name == "weight_net":  # todo add condition for injection or embedding
         algorithm = Weighting_Net(n_shots, n_ways, n_episodes, n_query, n_tests, train_dataset, test_dataset,
                                   n_repeats, n_box_plots, eval_inter, beta_1, beta_2, xbox_multiples)
+    elif alg_name == "meta_weight_net":
+        algorithm = MetaWeighting_Net(n_shots, n_ways, n_episodes, n_query, n_tests, train_dataset, test_dataset,
+                                      n_repeats, n_box_plots, eval_inter, beta_1, beta_2, xbox_multiples)
     else:
         algorithm = []
         input()
@@ -256,3 +265,10 @@ if __name__ == "__main__":
 
         with open(new_directory + "/" + final_accuracy_filename, "w") as text_file:
             text_file.write(final_accuracy_string)
+
+    # todo: merge the two task dataset into 1
+    # todo: check for names for injection and embedding
+    # todo: define parser for injection/embedding and config file
+    # todo: complete modification of other algorithms
+    # todo: maybe use other script for the final episodes functions
+    # todo: save into a log losses results after experiments

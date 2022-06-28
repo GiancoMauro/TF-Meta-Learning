@@ -5,7 +5,7 @@ import random
 import os
 
 
-class Dataset:
+class Dataset_Meta:
     """
     # This class facilitates the creation of a few-shot dataset
     """

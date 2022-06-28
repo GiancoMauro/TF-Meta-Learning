@@ -36,7 +36,7 @@ from utils.statistics import mean_confidence_interval
 
 class Weighting_Net:
     """
-    Core Implementation of the Weighting Network algorithm
+    Core Implementation of the Weighting Network algorithm (Both Embedding and Injection)
     """
 
     def __init__(self, n_shots, n_ways, n_episodes, n_query, n_tests, train_dataset, test_dataset,

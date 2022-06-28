@@ -27,7 +27,7 @@ from networks.conv_modules import conv_base_model
 from utils.box_plot_function import generate_box_plot
 from utils.json_functions import read_json
 from utils.statistics import mean_confidence_interval
-from utils.task_dataset_gen_meta import Dataset
+from utils.task_dataset_gen_meta import Dataset_Meta
 from utils.text_log_function import generate_text_logs
 
 main_config_file = "../configurations/main_config.json"
@@ -142,8 +142,8 @@ for counter, multiple in enumerate(xbox_multiples):
 
 print("Box Plots: " + str(xbox_labels))
 
-train_dataset = Dataset(training=True, config=dataset_config, classes=classes)
-test_dataset = Dataset(training=False, config=dataset_config, classes=classes)
+train_dataset = Dataset_Meta(training=True, config=dataset_config, classes=classes)
+test_dataset = Dataset_Meta(training=False, config=dataset_config, classes=classes)
 
 Algorithm_name += str(classes) + "_Classes_"
 
