@@ -84,7 +84,6 @@ class Dataset:
         # Get a random subset of num_classes labels from the entire label set.
 
         if task_labels_arr is None:
-
             label_subset = random.sample(self.dirs, k=num_classes)
 
         else:
@@ -104,14 +103,15 @@ class Dataset:
             if test_split and not query_split:
                 few_shot_test_labels[class_idx * testing_sho: (class_idx + 1) * testing_sho] = class_idx
                 # sample random elements to open from the folder
-                rand_indexes = random.sample(os.listdir(local_folder), k=training_sho + testing_sho)
+                rand_indexes = random.sample(os.listdir(local_folder), k=training_sho + testing_sho
+                                             )
                 images_to_split = np.array([np.expand_dims(np.array(plt.imread(local_folder + "/" + indx)), -1)
                                             for indx in rand_indexes])
 
                 # take just one shot of samples of the k + eval shots taken
                 # all the images except from the last one go in training:
-                few_shot_train_images[class_idx * training_sho: (class_idx + 1) * training_sho
-                ] = images_to_split[:-testing_sho]
+                few_shot_train_images[class_idx * training_sho: (class_idx + 1) * training_sho] = \
+                    images_to_split[:-testing_sho]
 
                 few_shot_test_images[class_idx * testing_sho: (class_idx + 1) * testing_sho] = \
                     images_to_split[-testing_sho:]  # take last elements

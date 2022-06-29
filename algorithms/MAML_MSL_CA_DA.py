@@ -21,30 +21,18 @@ import warnings
 from networks.conv_modules import conv_base_model
 from utils.json_functions import read_json
 from utils.statistics import mean_confidence_interval
+from algorithms.Algorithms_abc import AlgorithmsABC
 
 
-class Mamlplus:
+class Mamlplus(AlgorithmsABC):
     """
         Core Implementation of the Maml+MSL+CA+DA algorithm
         """
 
     def __init__(self, n_shots, n_ways, n_episodes, n_query, n_tests, train_dataset, test_dataset,
                  n_repeat, n_box_plots, eval_inter, beta_1, beta_2, xbox_multiples):
-        self.beta1 = beta_1
-        self.beta2 = beta_2
-        self.episodes = n_episodes
-        self.eval_interval = eval_inter
-        self.experiments_num = n_repeat
-        self.num_box_plots = n_box_plots
-        self.xbox_multiples = xbox_multiples
-        self.train_dataset = train_dataset
-        self.test_dataset = test_dataset
-
-        self.n_ways = n_ways
-        self.support_train_shots = n_shots
-        self.query_shots = n_query
-
-        self.test_shots = n_tests
+        super(Mamlplus, self).__init__(n_shots, n_ways, n_episodes, n_query, n_tests, train_dataset, test_dataset,
+                                       n_repeat, n_box_plots, eval_inter, beta_1, beta_2, xbox_multiples)
 
         self.alg_name = "Maml+MSL+CA+DA_"
 
@@ -99,13 +87,13 @@ class Mamlplus:
         base_model.summary()
         inner_optimizer = keras.optimizers.Adam(learning_rate=self.internal_learning_rate, beta_1=self.beta1,
                                                 beta_2=self.beta2)
-    
+
         outer_learning_rate_schedule = tf.keras.experimental.CosineDecay(self.initial_outer_learning_rate,
                                                                          self.decay_steps)
-    
-        outer_optimizer = keras.optimizers.Adam(learning_rate=outer_learning_rate_schedule, 
+
+        outer_optimizer = keras.optimizers.Adam(learning_rate=outer_learning_rate_schedule,
                                                 beta_1=self.beta1, beta_2=self.beta2)
-    
+
         ############### MAML IMPLEMENTATION LOOP ##########################à
         general_training_val_acc = []
         general_eval_val_acc = []
@@ -115,7 +103,7 @@ class Mamlplus:
         buffer_eval_val_acc = []
         # Step 2: instead of checking for convergence, we train for a number
         # of epochs
-    
+
         # Step 3 and 4
         # query_loss_sum is the summation of losses over time for the size of meta_batches
         query_loss_sum = tf.zeros(self.n_ways * self.query_shots)
@@ -124,10 +112,18 @@ class Mamlplus:
         for episode in range(0, self.episodes):
             print(episode)
             # the dataset to contains support and query
-            mini_support_dataset, _, _, query_images, query_labels, tsk_labels = self.train_dataset.get_mini_dataset(
-                self.batch_size, self.base_train_epochs, self.support_train_shots, self.n_ways, 
-                query_split=True, query_sho=self.query_shots)
-    
+            train_images, train_labels, query_images, query_labels, tsk_labels = \
+                self.train_dataset.get_mini_dataset(self.support_train_shots, self.n_ways, query_split=True,
+                                                    query_sho=self.query_shots
+                                                    )
+
+            # generate tf dataset:
+            mini_support_dataset = tf.data.Dataset.from_tensor_slices(
+                (train_images.astype(np.float32), train_labels.astype(np.int32))
+            )
+            mini_support_dataset = mini_support_dataset.shuffle(100).batch(self.batch_size).repeat(
+                self.base_train_epochs)
+
             # MSL ANNEALING IN META EPOCHS:
             if episode == round(self.episodes / 4):
                 self.loss_weights = [0.01, 0.03, 0.10, 0.88]
@@ -144,13 +140,13 @@ class Mamlplus:
                 if episode <= 50:  # (1/4) * episodes:
                     # print("FIRST ORDER")
                     # 1st ORDER MAML
-    
+
                     # Step 5
                     with tf.GradientTape() as train_tape:
                         support_preds = base_model(images)
                         train_loss = keras.losses.sparse_categorical_crossentropy(labels, support_preds)
                     # Step 6
-    
+
                     gradients = train_tape.gradient(train_loss, base_model.trainable_variables)
                     inner_optimizer.apply_gradients(zip(gradients, base_model.trainable_weights))
                     with tf.GradientTape() as test_tape:
@@ -161,7 +157,7 @@ class Mamlplus:
                         query_loss = keras.losses.sparse_categorical_crossentropy(query_labels, query_preds)
                         # sum the meta loss for the outer learning every N defined Meta Batches
                         query_loss_partial_sum = query_loss_partial_sum + query_loss * self.loss_weights[epochs_counter]
-    
+
                         if inner_batches_counter == self.num_batches_per_inner_base_epoch - 1:
                             # if i'm in the last inner batch, then average the query_loss_sum over the performed batches
                             query_loss_sum += query_loss_partial_sum / self.num_batches_per_inner_base_epoch
@@ -170,19 +166,19 @@ class Mamlplus:
                 else:
                     # print("SECOND ORDER")
                     # 2nd Order MAML
-    
+
                     with tf.GradientTape() as test_tape:
                         # Step 5
                         with tf.GradientTape() as train_tape:
                             support_preds = base_model(images)
                             train_loss = keras.losses.sparse_categorical_crossentropy(labels, support_preds)
-    
+
                         # Step 6
                         gradients = train_tape.gradient(train_loss, base_model.trainable_variables)
                         # Internal Lr = External
                         inner_optimizer.apply_gradients(zip(gradients, base_model.trainable_weights))
                         # for all the weights: *weights = weights - learning rate*(Delta update)
-    
+
                         # Step 8
                         # compute the model loss over different images (query data)
                         # evaluate model trained on theta' over the query images
@@ -192,24 +188,24 @@ class Mamlplus:
                         query_loss_partial_sum = query_loss_partial_sum + query_loss * self.loss_weights[epochs_counter]
                         # since the sum of the loss weights is one, no division of the query loss over inner epochs is 
                         # needed 
-    
+
                         if inner_batches_counter == self.num_batches_per_inner_base_epoch - 1:
                             # if i'm in the last inner batch, then average the query_loss_sum over the performed batches
                             query_loss_sum += query_loss_partial_sum / self.num_batches_per_inner_base_epoch
                             # reset the query loss partial sum over inner inner_batches
                             query_loss_partial_sum = tf.zeros(self.n_ways * self.query_shots)
-    
+
                 inner_batches_counter += 1
-    
+
                 if inner_batches_counter == self.num_batches_per_inner_base_epoch:
                     # update the current epochs weight
                     epochs_counter += 1
                     inner_batches_counter = 0
-    
+
             # go back on theta parameters for the update after THE INNER LOOP
             # META UPDATE IS DONE EVERY DEFINED NUM OF INNER EPOCHS
             base_model.set_weights(old_vars)
-    
+
             # UPDATE USING THE WEIGHTED SUM OVER INNER LOOPS
             gradients = test_tape.gradient(query_loss_sum, base_model.trainable_variables)
             outer_optimizer.apply_gradients(zip(gradients, base_model.trainable_variables))
@@ -217,7 +213,7 @@ class Mamlplus:
             query_loss_sum = tf.zeros(self.n_ways * self.query_shots)
             # Step 8
             # is it keeping track of the losses on time?
-    
+
             # Evaluation loop
             if episode % self.eval_interval == 0:
                 if (episode in self.xbox_multiples or episode == self.episodes - 1) and episode != 0:
@@ -230,17 +226,22 @@ class Mamlplus:
                     buffer_training_val_acc = []
                     buffer_eval_val_acc = []
                     # print("after:" + str(general_training_val_acc))
-    
+
                 accuracies = []
                 for dataset in (self.train_dataset, self.test_dataset):
                     # set it to zero for validation and then test
                     num_correct = 0
                     # Sample a mini dataset from the full dataset.
-                    train_set, _, _, test_images, test_labels, task_labels = dataset.get_mini_dataset(
-                        self.batch_size, self.eval_train_epochs, self.support_train_shots, self.n_ways, test_split=True,
-                        testing_sho=self.test_shots)
-                    # print(train_set)
-    
+                    train_images_eval, train_labels_eval, test_images, test_labels, task_labels = \
+                        dataset.get_mini_dataset(self.support_train_shots, self.n_ways, test_split=True,
+                                                 testing_sho=self.test_shots)
+
+                    # generate tf dataset:
+                    train_set = tf.data.Dataset.from_tensor_slices(
+                        (train_images_eval.astype(np.float32), train_labels_eval.astype(np.int32))
+                    )
+                    train_set = train_set.shuffle(100).batch(self.batch_size).repeat(self.eval_train_epochs)
+
                     old_vars = base_model.get_weights()
                     # Train on the samples and get the resulting accuracies.
                     for images, labels in train_set:
@@ -249,7 +250,7 @@ class Mamlplus:
                             loss = keras.losses.sparse_categorical_crossentropy(labels, preds)
                         grads = tape.gradient(loss, base_model.trainable_weights)
                         inner_optimizer.apply_gradients(zip(grads, base_model.trainable_weights))
-    
+
                     # test phase after model evaluation
                     eval_preds = base_model.predict(test_images)
                     predicted_classes_eval = []
@@ -258,7 +259,7 @@ class Mamlplus:
                     for index, prediction in enumerate(predicted_classes_eval):
                         if prediction == test_labels[index]:
                             num_correct += 1
-    
+
                     # Reset the weights after getting the evaluation accuracies.
                     base_model.set_weights(old_vars)
                     # for both validation and testing, accuracy is done over the length of test samples
@@ -270,10 +271,10 @@ class Mamlplus:
                 # test accuracy
                 eval_val_acc.append(accuracies[1])
                 buffer_eval_val_acc.append(accuracies[1])
-    
+
                 if episode % 5 == 0:
                     print("batch %d: eval on train=%f eval on test=%f" % (episode, accuracies[0], accuracies[1]))
-    
+
         return base_model, general_training_val_acc, general_eval_val_acc
 
     def final_evaluation(self, base_model, final_episodes):
@@ -285,21 +286,28 @@ class Mamlplus:
         """
         ############ EVALUATION OVER FINAL TASKS ###############
         test_accuracy = []
-    
+
         base_weights = base_model.get_weights()
-    
+
         time_stamps_adaptation = []
         time_stamps_single_pred = []
-    
+
         inner_optimizer = keras.optimizers.Adam(learning_rate=self.internal_learning_rate,
                                                 beta_1=self.beta1, beta_2=self.beta2)
-    
+
         for task_num in range(0, final_episodes):
-    
+
             print("final task num: " + str(task_num))
-            train_set_task, _, _, test_images_task, test_labels_task, task_labs = self.test_dataset.get_mini_dataset(
-                self.batch_size, self.eval_train_epochs, self.support_train_shots, self.n_ways, test_split=True,
-                testing_sho=self.test_shots)
+            train_images_task, train_labels_task, test_images_task, test_labels_task, task_labs = \
+                self.test_dataset.get_mini_dataset(self.support_train_shots, self.n_ways,
+                                                   test_split=True, testing_sho=self.test_shots)
+
+            # generate tf dataset:
+            train_set_task = tf.data.Dataset.from_tensor_slices(
+                (train_images_task.astype(np.float32), train_labels_task.astype(np.int32))
+            )
+            train_set_task = train_set_task.shuffle(100).batch(self.batch_size).repeat(self.eval_train_epochs)
+
             # train the Base model over the 1-shot Task:
             adaptation_start = time.time()
             for images, labels in train_set_task:
@@ -312,35 +320,35 @@ class Mamlplus:
             time_stamps_adaptation.append(adaptation_end - adaptation_start)
             # predictions for the task
             eval_preds = base_model.predict(test_images_task)
-    
+
             single_pred_start = time.time()
             pred_example = np.expand_dims(test_images_task[0], 0)
             single_pred = base_model.predict(pred_example)
             single_pred_end = time.time()
             time_stamps_single_pred.append(single_pred_end - single_pred_start)
-    
+
             predicted_classes = []
             for prediction_sample in eval_preds:
                 predicted_classes.append(tf.argmax(np.asarray(prediction_sample)))
-    
+
             num_correct_out_loop = 0
             for index, prediction in enumerate(predicted_classes):
                 if prediction == test_labels_task[index]:
                     num_correct_out_loop += 1
-    
+
             test_accuracy_new_val = num_correct_out_loop / len(test_images_task)
             test_accuracy.append(round(test_accuracy_new_val * 100, 2))
-    
+
             # reset the network weights to the base ones
             # Reset the weights after getting the evaluation accuracies.
             base_model.set_weights(base_weights)
-    
+
         total_accuracy = np.average(test_accuracy)
-    
+
         test_accuracy, h = mean_confidence_interval(np.array(test_accuracy) / 100)
-    
+
         ms_latency = np.mean(time_stamps_adaptation) * 1e3
-    
+
         ms_prediction_latency = np.mean(time_stamps_single_pred) * 1e3
-    
+
         return total_accuracy, h, ms_latency, ms_prediction_latency

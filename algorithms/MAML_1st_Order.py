@@ -17,30 +17,18 @@ import warnings
 from networks.conv_modules import conv_base_model
 from utils.json_functions import read_json
 from utils.statistics import mean_confidence_interval
+from algorithms.Algorithms_abc import AlgorithmsABC
 
 
-class Maml1st_Order:
+class Maml1st_Order(AlgorithmsABC):
     """
         Core Implementation of the Maml1st Order algorithm
         """
 
     def __init__(self, n_shots, n_ways, n_episodes, n_query, n_tests, train_dataset, test_dataset,
                  n_repeat, n_box_plots, eval_inter, beta_1, beta_2, xbox_multiples):
-        self.beta1 = beta_1
-        self.beta2 = beta_2
-        self.episodes = n_episodes
-        self.eval_interval = eval_inter
-        self.experiments_num = n_repeat
-        self.num_box_plots = n_box_plots
-        self.xbox_multiples = xbox_multiples
-        self.train_dataset = train_dataset
-        self.test_dataset = test_dataset
-
-        self.n_ways = n_ways
-        self.support_train_shots = n_shots
-        self.query_shots = n_query
-
-        self.test_shots = n_tests
+        super(Maml1st_Order, self).__init__(n_shots, n_ways, n_episodes, n_query, n_tests, train_dataset, test_dataset,
+                                            n_repeat, n_box_plots, eval_inter, beta_1, beta_2, xbox_multiples)
 
         self.alg_name = "Maml1st_Ord_"
 
@@ -116,10 +104,18 @@ class Maml1st_Order:
             print(episode)
             # # set the new learning step for the meta optimizer
             # the dataset to contains support and query
-            mini_support_dataset, _, _, query_images, query_labels, tsk_labels = self.train_dataset.get_mini_dataset(
-                self.batch_size, self.base_train_epochs, self.support_train_shots, self.n_ways, query_split=True,
-                query_sho=self.query_shots
+            train_images, train_labels, query_images, query_labels, tsk_labels = \
+                self.train_dataset.get_mini_dataset(self.support_train_shots, self.n_ways, query_split=True,
+                                                    query_sho=self.query_shots
+                                                    )
+
+            # generate tf dataset:
+            mini_support_dataset = tf.data.Dataset.from_tensor_slices(
+                (train_images.astype(np.float32), train_labels.astype(np.int32))
             )
+            mini_support_dataset = mini_support_dataset.shuffle(100).batch(self.batch_size).repeat(
+                self.base_train_epochs)
+
             old_vars = base_model.get_weights()
 
             # INTERNAL TRAINING LOOP
@@ -197,10 +193,15 @@ class Maml1st_Order:
                     # set it to zero for validation and then test
                     num_correct = 0
                     # Sample a mini dataset from the full dataset.
-                    train_set, _, _, test_images, test_labels, task_labels = dataset.get_mini_dataset(
-                        self.batch_size, self.eval_train_epochs, self.support_train_shots, self.n_ways, test_split=True,
-                        testing_sho=self.test_shots)
-                    # print(train_set)
+                    train_images_eval, train_labels_eval, test_images, test_labels, task_labels = \
+                        dataset.get_mini_dataset(self.support_train_shots, self.n_ways, test_split=True,
+                                                 testing_sho=self.test_shots)
+
+                    # generate tf dataset:
+                    train_set = tf.data.Dataset.from_tensor_slices(
+                        (train_images_eval.astype(np.float32), train_labels_eval.astype(np.int32))
+                    )
+                    train_set = train_set.shuffle(100).batch(self.batch_size).repeat(self.eval_train_epochs)
 
                     old_vars = base_model.get_weights()
                     # Train on the samples and get the resulting accuracies.
@@ -268,9 +269,16 @@ class Maml1st_Order:
         for task_num in range(0, final_episodes):
 
             print("final task num: " + str(task_num))
-            train_set_task, _, _, test_images_task, test_labels_task, task_labs = self.test_dataset.get_mini_dataset(
-                self.batch_size, self.eval_train_epochs, self.support_train_shots, self.n_ways, test_split=True,
-                testing_sho=self.test_shots)
+            train_images_task, train_labels_task, test_images_task, test_labels_task, task_labs = \
+                self.test_dataset.get_mini_dataset(self.support_train_shots, self.n_ways,
+                                                   test_split=True, testing_sho=self.test_shots)
+
+            # generate tf dataset:
+            train_set_task = tf.data.Dataset.from_tensor_slices(
+                (train_images_task.astype(np.float32), train_labels_task.astype(np.int32))
+            )
+            train_set_task = train_set_task.shuffle(100).batch(self.batch_size).repeat(self.eval_train_epochs)
+
             # train the Base model over the 1-shot Task:
             adaptation_start = time.time()
             for images, labels in train_set_task:

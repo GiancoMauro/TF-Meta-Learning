@@ -6,7 +6,7 @@ import re
 from utils.box_plot_function import generate_box_plot
 from utils.json_functions import read_json
 from utils.task_dataset_gen import Dataset
-from utils.task_dataset_gen_meta import Dataset_Meta
+from algorithms.Algorithms_abc import AlgorithmsABC
 from algorithms.Weighting_Net import Weighting_Net
 from algorithms.MetaWeighting_Net import MetaWeighting_Net
 from algorithms.MAML_2nd_Order import Maml2nd_Order
@@ -30,7 +30,7 @@ if __name__ == "__main__":
         "--alg",
         help="available meta learning algorithms [weight_net, meta_weight_net, reptile, maml2nd, maml1st, maml_plus]",
         type=str,
-        default="reptile"  # "weight_net"
+        default="meta_weight_net"  # "weight_net"
     )
     parser.add_argument(
         "--n_ways",
@@ -54,7 +54,7 @@ if __name__ == "__main__":
         "--n_episodes",
         help="number of episodes of the experiment [10, 100, 1000, 22000, ...]",
         type=int,
-        default=50  # 22000
+        default=30  # 22000
     )
     parser.add_argument(
         "--n_query",
@@ -159,12 +159,8 @@ if __name__ == "__main__":
 
     dataset_config = read_json(dataset_config_file)
 
-    if alg_name == "weight_net":
-        train_dataset = Dataset(training=True, config=dataset_config, classes=n_ways)
-        test_dataset = Dataset(training=False, config=dataset_config, classes=n_ways)
-    else:
-        train_dataset = Dataset_Meta(training=True, config=dataset_config, classes=n_ways)
-        test_dataset = Dataset_Meta(training=False, config=dataset_config, classes=n_ways)
+    train_dataset = Dataset(training=True, config=dataset_config, classes=n_ways)
+    test_dataset = Dataset(training=False, config=dataset_config, classes=n_ways)
 
     # LOAD PLOT CONFIGURATIONS:
     plot_config_file = "configurations/general_config/plot_config.json"
@@ -185,6 +181,7 @@ if __name__ == "__main__":
     elif alg_name == "maml1st":
         algorithm = Maml1st_Order(n_shots, n_ways, n_episodes, n_query, n_tests, train_dataset, test_dataset,
                                   n_repeats, n_box_plots, eval_inter, beta_1, beta_2, xbox_multiples)
+
     elif alg_name == "maml_plus":
         algorithm = Mamlplus(n_shots, n_ways, n_episodes, n_query, n_tests, train_dataset, test_dataset,
                              n_repeats, n_box_plots, eval_inter, beta_1, beta_2, xbox_multiples)
@@ -224,16 +221,18 @@ if __name__ == "__main__":
         if not os.path.exists(new_directory):
             os.mkdir(new_directory)
         else:
-            Pattern = re.compile(new_directory[:-1])
-            folder_list = os.listdir()
+            # todo this can be improved with regular expressions
+            Pattern = re.compile(new_directory[8:-10])
+            folder_list = os.listdir("results/")
             filtered = [folder for folder in folder_list if Pattern.match(folder)]
             list_existing_folders = []
             for directory in list(filtered):
                 # find the last existing repetition of the simulation
-                list_existing_folders.append(int(str(directory)[-1]))
+                list_existing_folders.append(int(str(directory)[-11]))
 
             simul_repeat_dir = max(list_existing_folders) + 1
-            new_directory = new_directory[:-len(str(simul_repeat_dir))] + "_" + str(simul_repeat_dir)
+            new_directory = "results/" + alg_name + "_" + str(n_shots) + "_Shots_" + \
+                            str(n_episodes) + "_Episodes_" + str(simul_repeat_dir) + "_simul_num"
             os.mkdir(new_directory)
 
         # SAVE MODEL:

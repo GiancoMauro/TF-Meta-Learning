@@ -32,38 +32,26 @@ import warnings
 from networks.weighting_modules import Full_Pipeline
 from utils.json_functions import read_json
 from utils.statistics import mean_confidence_interval, add_noise_images
+from algorithms.Algorithms_abc import AlgorithmsABC
 
 
-class MetaWeighting_Net:
+class MetaWeighting_Net(AlgorithmsABC):
     """
     Core Implementation of the Meta-Weighting Network algorithm
     """
 
     def __init__(self, n_shots, n_ways, n_episodes, n_query, n_tests, train_dataset, test_dataset,
                  n_repeat, n_box_plots, eval_inter, beta_1, beta_2, xbox_multiples):
+        super(MetaWeighting_Net, self).__init__(n_shots, n_ways, n_episodes, n_query, n_tests, train_dataset,
+                                                test_dataset, n_repeat, n_box_plots, eval_inter, beta_1, beta_2,
+                                                xbox_multiples)
 
-        self.beta1 = beta_1
-        self.beta2 = beta_2
-        self.episodes = n_episodes
-        self.eval_interval = eval_inter
-        self.experiments_num = n_repeat
-        self.num_box_plots = n_box_plots
-        self.xbox_multiples = xbox_multiples
-        self.train_dataset = train_dataset
-        self.test_dataset = test_dataset
+        self.alg_name = "MetaWeighting_Net_"
 
-        self.n_ways = n_ways
-        self.support_train_shots = n_shots
-        self.query_shots = n_query
-
-        self.test_shots = n_tests
-
-        spec_config_file = "configurations/Weighting_Net.json"
+        spec_config_file = "configurations/MetaWeighting_Net.json"
         spec_config_file = Path(spec_config_file)
 
         self.spec_config = read_json(spec_config_file)
-
-        self.alg_name = "Weighting_Net_"
 
         # embedding dimension for the Embedding/Injection Module of Weighting Nets.
         self.embedding_dimension = self.spec_config["embedding_dimension"]
@@ -79,27 +67,10 @@ class MetaWeighting_Net:
         # initializer = tf.keras.initializers.VarianceScaling(scale=2.0, mode='fan_in',
         #                                                     distribution='truncated_normal', seed=None)
 
-        spec_config_file = "../configurations/MetaWeighting_Net.json"
-        spec_config_file = Path(spec_config_file)
-
-        spec_config = read_json(spec_config_file)
-
-        self.alg_name = "MetaWeighting_Net_"
-
-        # embedding dimension for the Embedding/Injection Module of Weighting Nets.
-        self.embedding_dimension = spec_config["embedding_dimension"]
-        self.weighting_dim = spec_config["weighting_dimension"]
-
-        # is a simulation with injection module?
-        self.is_injection = spec_config["injection_module"]
-
-        # inner loop learning rate of the Adam optimizer:
-        self.internal_learning_rate = spec_config["internal_learning_rate"]
-
         ### Meta related parameters ##
-        self.meta_batches = spec_config["meta_batches"]
-        self.outer_learning_rate = spec_config["outer_learning_rate"]
-        self.base_epochs = spec_config["base_train_epochs"]
+        self.meta_batches = self.spec_config["meta_batches"]
+        self.outer_learning_rate = self.spec_config["outer_learning_rate"]
+        self.base_epochs = self.spec_config["base_train_epochs"]
         # the number of samples per batch is shots * num classes. e.g. 5 shot per class and 4 classes: batch_size = 20
         self.batch_size = self.n_ways * self.support_train_shots
 
@@ -153,9 +124,17 @@ class MetaWeighting_Net:
             print(episode)
             # # set the new learning step for the meta optimizer
             # the dataset to contains support and query
-            mini_support_dataset, support_images, support_labels, query_images, query_labels, tsk_labels = \
-                self.train_dataset.get_mini_dataset(self.batch_size, self.base_epochs, self.support_train_shots,
-                                                    self.n_ways, query_split=True, query_sho=self.query_shots)
+            support_images, support_labels, query_images, query_labels, tsk_labels = \
+                self.train_dataset.get_mini_dataset(self.support_train_shots, self.n_ways, query_split=True,
+                                                    query_sho=self.query_shots
+                                                    )
+
+            # generate tf dataset:
+            mini_support_dataset = tf.data.Dataset.from_tensor_slices(
+                (support_images.astype(np.float32), support_labels.astype(np.int32))
+            )
+            mini_support_dataset = mini_support_dataset.shuffle(100).batch(self.batch_size).repeat(
+                self.base_epochs)
 
             if episode == 0:
                 full_pipeline_model.call(support_images, query_images, self.support_train_shots, self.query_shots)
@@ -244,12 +223,11 @@ class MetaWeighting_Net:
                     # set it to zero for validation and then test
                     num_correct = 0
                     # Sample a mini dataset from the full dataset.
-                    mini_train_dataset, train_images, train_labels, test_images, test_labels, task_labels = \
-                        dataset.get_mini_dataset(self.batch_size, self.base_epochs,
-                                                 self.support_train_shots, self.n_ways, test_split=True,
+                    train_images_eval, train_labels_eval, test_images, test_labels, task_labels = \
+                        dataset.get_mini_dataset(self.support_train_shots, self.n_ways, test_split=True,
                                                  testing_sho=self.test_shots)
 
-                    eval_preds = full_pipeline_model(train_images, test_images,
+                    eval_preds = full_pipeline_model(train_images_eval, test_images,
                                                      self.support_train_shots, self.test_shots)
 
                     predicted_classes_eval = []
@@ -293,8 +271,8 @@ class MetaWeighting_Net:
         for task_num in range(0, final_episodes):
 
             print("final task num: " + str(task_num))
-            mini_tr_fin_dataset, train_images_task, train_labels_task, test_images_task, test_labels_task, task_labs = \
-                self.test_dataset.get_mini_dataset(self.batch_size, self.base_epochs, self.support_train_shots,
+            train_images_task, train_labels_task, test_images_task, test_labels_task, task_labs = \
+                self.test_dataset.get_mini_dataset(self.support_train_shots,
                                                    self.n_ways, test_split=True, testing_sho=self.test_shots)
 
             # predictions for the task

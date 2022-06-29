@@ -32,39 +32,25 @@ import warnings
 from networks.weighting_modules import Full_Pipeline
 from utils.json_functions import read_json
 from utils.statistics import mean_confidence_interval
+from algorithms.Algorithms_abc import AlgorithmsABC
 
 
-class Weighting_Net:
+class Weighting_Net(AlgorithmsABC):
     """
     Core Implementation of the Weighting Network algorithm (Both Embedding and Injection)
     """
 
     def __init__(self, n_shots, n_ways, n_episodes, n_query, n_tests, train_dataset, test_dataset,
                  n_repeat, n_box_plots, eval_inter, beta_1, beta_2, xbox_multiples):
-        # load standard configurations
+        super(Weighting_Net, self).__init__(n_shots, n_ways, n_episodes, n_query, n_tests, train_dataset, test_dataset,
+                                            n_repeat, n_box_plots, eval_inter, beta_1, beta_2, xbox_multiples)
 
-        self.beta1 = beta_1
-        self.beta2 = beta_2
-        self.episodes = n_episodes
-        self.eval_interval = eval_inter
-        self.experiments_num = n_repeat
-        self.num_box_plots = n_box_plots
-        self.xbox_multiples = xbox_multiples
-        self.train_dataset = train_dataset
-        self.test_dataset = test_dataset
-
-        self.n_ways = n_ways
-        self.support_train_shots = n_shots
-        self.query_shots = n_query
-
-        self.test_shots = n_tests
+        self.alg_name = "Weighting_Net_"
 
         spec_config_file = "configurations/Weighting_Net.json"
         spec_config_file = Path(spec_config_file)
 
         self.spec_config = read_json(spec_config_file)
-
-        self.alg_name = "Weighting_Net_"
 
         # embedding dimension for the Embedding/Injection Module of Weighting Nets.
         self.embedding_dimension = self.spec_config["embedding_dimension"]
