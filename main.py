@@ -1,21 +1,15 @@
 import argparse
 import json
-import numpy as np
 import os
 from pathlib import Path
 import re
-import tensorflow as tf
-from tensorflow import keras
-import time
-# import sys
-from networks.weighting_modules import Full_Pipeline
 from utils.box_plot_function import generate_box_plot
 from utils.json_functions import read_json
-from utils.statistics import mean_confidence_interval
 from utils.task_dataset_gen import Dataset
 from utils.task_dataset_gen_meta import Dataset_Meta
 from algorithms.Weighting_Net import Weighting_Net
 from algorithms.MetaWeighting_Net import MetaWeighting_Net
+from algorithms.MAML_2nd_Order import Maml2nd_Order
 from utils.text_log_function import generate_text_logs
 
 """
@@ -33,7 +27,7 @@ if __name__ == "__main__":
         "--alg",
         help="available meta learning algorithms [weight_net, meta_weight_net, reptile, maml2nd, maml1st, maml_plus]",
         type=str,
-        default="meta_weight_net"  # "weight_net"
+        default="maml2nd"  # "weight_net"
     )
     parser.add_argument(
         "--n_ways",
@@ -182,6 +176,9 @@ if __name__ == "__main__":
     elif alg_name == "meta_weight_net":
         algorithm = MetaWeighting_Net(n_shots, n_ways, n_episodes, n_query, n_tests, train_dataset, test_dataset,
                                       n_repeats, n_box_plots, eval_inter, beta_1, beta_2, xbox_multiples)
+    elif alg_name == "maml2nd":
+        algorithm = Maml2nd_Order(n_shots, n_ways, n_episodes, n_query, n_tests, train_dataset, test_dataset,
+                                  n_repeats, n_box_plots, eval_inter, beta_1, beta_2, xbox_multiples)
     else:
         algorithm = []
         input()
@@ -198,7 +195,7 @@ if __name__ == "__main__":
     # TRAIN MODEL FOR N REPETITIONS:
     for repeat in range(n_repeats):
 
-        full_pipeline_model, training_val_acc, eval_val_acc = algorithm.train_and_evaluate()
+        base_model, training_val_acc, eval_val_acc = algorithm.train_and_evaluate()
 
         # SAVE MODEL AND LOG FILES
         # create sim_directories
@@ -227,7 +224,7 @@ if __name__ == "__main__":
 
         # SAVE MODEL:
 
-        full_pipeline_model.save_weights(
+        base_model.save_weights(
             new_directory + "/full_model_weights_" + alg_name + "_" + str(n_episodes) + ".h5")
 
         #######################
@@ -250,8 +247,7 @@ if __name__ == "__main__":
                            training_val_acc, eval_val_acc)
 
         # FINAL TRAINING/TESTING ON EPISODES AFTER GENERALIZATION TRAINING
-        # todo adapt it to the adaptation training of MAML (maybe set it as zero for the weighting network)
-        total_accuracy, h, ms_pred_latency = algorithm.final_evaluation(full_pipeline_model, n_fin_episodes)
+        total_accuracy, h, ms_latency, ms_pred_latency = algorithm.final_evaluation(base_model, n_fin_episodes)
 
         final_accuracy_filename = alg_name + str(n_fin_episodes) + " Test_Tasks_Final_Accuracy.txt"
 
@@ -259,6 +255,9 @@ if __name__ == "__main__":
             n_fin_episodes) + " Test Tasks, with: " + str(
             n_tests) + "samples per class, is: " + str(
             total_accuracy) + "% with a 95% confidence interval of +- " + str(h * 100) + "%"
+
+        final_accuracy_string += "\n" + "The latency time for a final training is: " \
+                                 + str(ms_latency) + " milliseconds"
 
         final_accuracy_string += "\n" + "The latency time for a single prediction is: " \
                                  + str(ms_pred_latency) + " milliseconds"

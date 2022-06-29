@@ -1,6 +1,7 @@
 from tensorflow.keras import layers
 from tensorflow import keras
-
+from pathlib import Path
+from utils.json_functions import read_json
 
 def conv_bn(x_l, filt_num=128, kern_size=3, stride=2, gaussian_noise=False):
     """
@@ -21,20 +22,25 @@ def conv_bn(x_l, filt_num=128, kern_size=3, stride=2, gaussian_noise=False):
     return layers.ReLU()(x_l)
 
 
-def conv_base_model(data_config, exp_config, classes):
+def conv_base_model(n_ways, conv_filters_number, conv_kernel_size):
     """
     function that generates the base model for optimization-based meta-learning experiments
-    :param data_config: configuration file with dataset information
-    :param exp_config: configuration file for specific experiment information
-    :param classes: number of wayw of the experiment
+    :param n_ways: number of ways for the classification experiment
+    :param conv_filters_number: number of convolution filters of the second layer
+    :param conv_kernel_size: kernel size for the convulutional layers
     :return: generated base model
     """
+    dataset_config_file = "configurations/general_config/dataset_config.json"
+    dataset_config_file = Path(dataset_config_file)
+
+    data_config = read_json(dataset_config_file)
+
+    # todo load directly here the needed data config parameters
 
     x_size_image = data_config["x_size_image"]
     y_size_image = data_config["y_size_image"]
     channels = data_config["image_channels"]
-    conv_filters_number = exp_config["conv_filters_per_layer"]
-    conv_kernel_size = exp_config["conv_kernel_size"]
+
     inputs = layers.Input(shape=(x_size_image, y_size_image, channels))
 
     x = conv_bn(inputs, filt_num=round(conv_filters_number / 2), kern_size=conv_kernel_size)
@@ -43,7 +49,7 @@ def conv_base_model(data_config, exp_config, classes):
 
     flatten = layers.Flatten()(x)
 
-    outputs = layers.Dense(classes, activation="softmax")(flatten)
+    outputs = layers.Dense(n_ways, activation="softmax")(flatten)
     base_model = keras.Model(inputs=inputs, outputs=outputs)
 
     return base_model

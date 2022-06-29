@@ -233,10 +233,12 @@ class Weighting_Net:
 
         test_accuracy, h = mean_confidence_interval(np.array(test_accuracy) / 100)
 
+        # No adaptation training required with relational algorithms
+        ms_latency = 0
+
         ms_prediction_latency = np.mean(time_stamps_single_pred) * 1e3
 
-        return total_accuracy, h, ms_prediction_latency
-
+        return total_accuracy, h, ms_latency, ms_prediction_latency
 
 # if __name__ == "__main__":
 #     # load standard configurations
@@ -274,4 +276,3 @@ class Weighting_Net:
 #
 #     # number of final evaluations of the algorithm
 #     final_episodes = main_config["final_episodes_final"]
-

@@ -79,7 +79,7 @@ class MetaWeighting_Net:
         # initializer = tf.keras.initializers.VarianceScaling(scale=2.0, mode='fan_in',
         #                                                     distribution='truncated_normal', seed=None)
 
-        spec_config_file = "configurations/MetaWeighting_Net.json"
+        spec_config_file = "../configurations/MetaWeighting_Net.json"
         spec_config_file = Path(spec_config_file)
 
         spec_config = read_json(spec_config_file)
@@ -109,9 +109,6 @@ class MetaWeighting_Net:
         else:
             self.num_batches_per_inner_base_epoch = round(
                 (self.n_ways * self.support_train_shots) / self.batch_size) + 1
-
-        # total number of batches for every episode: needed for BNRS + BNWB
-        self.tot_num_base_batches = self.base_epochs * self.num_batches_per_inner_base_epoch
 
     def train_and_evaluate(self):
         """
@@ -327,6 +324,9 @@ class MetaWeighting_Net:
 
         test_accuracy, h = mean_confidence_interval(np.array(test_accuracy) / 100)
 
+        # No adaptation training required with relational algorithms
+        ms_latency = 0
+
         ms_prediction_latency = np.mean(time_stamps_single_pred) * 1e3
 
-        return total_accuracy, h, ms_prediction_latency
+        return total_accuracy, h, ms_latency, ms_prediction_latency
