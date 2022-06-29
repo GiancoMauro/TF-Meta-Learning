@@ -6,7 +6,6 @@ import re
 from utils.box_plot_function import generate_box_plot
 from utils.json_functions import read_json
 from utils.task_dataset_gen import Dataset
-from algorithms.Algorithms_abc import AlgorithmsABC
 from algorithms.Weighting_Net import Weighting_Net
 from algorithms.MetaWeighting_Net import MetaWeighting_Net
 from algorithms.MAML_2nd_Order import Maml2nd_Order
@@ -30,7 +29,7 @@ if __name__ == "__main__":
         "--alg",
         help="available meta learning algorithms [weight_net, meta_weight_net, reptile, maml2nd, maml1st, maml_plus]",
         type=str,
-        default="meta_weight_net"  # "weight_net"
+        default="reptile"  # "weight_net"
     )
     parser.add_argument(
         "--n_ways",
@@ -100,29 +99,35 @@ if __name__ == "__main__":
     )
     # todo define also loss function and take out beta_1 and 2 as parameters
 
-    args = parser.parse_args()
-    alg_name = args.alg
+    name_args = parser.parse_args()
+
+    args = vars(name_args)
+
+    alg_name = name_args.alg
     # inner loop - training on tasks number of shots (samples per class in mini-batch)
-    n_shots = int(args.n_shots)
+    n_shots = int(name_args.n_shots)
     # number of ways of the experiment
-    n_ways = int(args.n_ways)
+    n_ways = int(name_args.n_ways)
     # Num of test samples for evaluation per class. Tot Samples = (num of classes * eval_test_shots).
-    n_tests = int(args.n_tests)
+    n_tests = int(name_args.n_tests)
     # number of inner loop episodes - mini batch tasks training.
-    n_episodes = int(args.n_episodes)
-    # number of query shots for the algorithm during the training phase
-    n_query = int(args.n_query)
+    n_episodes = int(name_args.n_episodes)
+
     # number of final evaluations of the algorithm
-    n_fin_episodes = int(args.n_fin_episodes)
+    n_fin_episodes = int(name_args.n_fin_episodes)
     # number of times that the experiment has to be repeated
-    n_repeats = int(args.n_repeats)
+    n_repeats = int(name_args.n_repeats)
     # num of box plots for evaluation
-    n_box_plots = int(args.n_box_plots)
-    # After how many meta training episodes, make an evaluation?
-    eval_inter = int(args.eval_step)
-    # adam beta parameters
-    beta_1 = float(args.beta1)
-    beta_2 = float(args.beta2)
+    n_box_plots = int(name_args.n_box_plots)
+
+    # todo add description to README
+    # # number of query shots for the algorithm during the training phase
+    # n_query = int(name_args.n_query)
+    # # After how many meta training episodes, make an evaluation?
+    # eval_inter = int(name_args.eval_step)
+    # # adam beta parameters
+    # beta_1 = float(name_args.beta1)
+    # beta_2 = float(name_args.beta2)
 
     # number of simulations per boxplot wanted in the final plot
     boxes_eval = int(round(n_episodes / n_box_plots))
@@ -162,6 +167,11 @@ if __name__ == "__main__":
     train_dataset = Dataset(training=True, config=dataset_config, classes=n_ways)
     test_dataset = Dataset(training=False, config=dataset_config, classes=n_ways)
 
+    # add dataset and boxplots multiples to dictionary
+    args["train_dataset"] = train_dataset
+    args["test_dataset"] = test_dataset
+    args["xbox_multiples"] = xbox_multiples
+
     # LOAD PLOT CONFIGURATIONS:
     plot_config_file = "configurations/general_config/plot_config.json"
     plot_config_file = Path(plot_config_file)
@@ -170,39 +180,26 @@ if __name__ == "__main__":
 
     ### INIT ALGORITHM
     if alg_name == "weight_net":  # todo add condition for injection or embedding
-        algorithm = Weighting_Net(n_shots, n_ways, n_episodes, n_query, n_tests, train_dataset, test_dataset,
-                                  n_repeats, n_box_plots, eval_inter, beta_1, beta_2, xbox_multiples)
+        algorithm = Weighting_Net(**args)
     elif alg_name == "meta_weight_net":
-        algorithm = MetaWeighting_Net(n_shots, n_ways, n_episodes, n_query, n_tests, train_dataset, test_dataset,
-                                      n_repeats, n_box_plots, eval_inter, beta_1, beta_2, xbox_multiples)
+        algorithm = MetaWeighting_Net(**args)
     elif alg_name == "maml2nd":
-        algorithm = Maml2nd_Order(n_shots, n_ways, n_episodes, n_query, n_tests, train_dataset, test_dataset,
-                                  n_repeats, n_box_plots, eval_inter, beta_1, beta_2, xbox_multiples)
+        algorithm = Maml2nd_Order(**args)
     elif alg_name == "maml1st":
-        algorithm = Maml1st_Order(n_shots, n_ways, n_episodes, n_query, n_tests, train_dataset, test_dataset,
-                                  n_repeats, n_box_plots, eval_inter, beta_1, beta_2, xbox_multiples)
+        algorithm = Maml1st_Order(**args)
 
     elif alg_name == "maml_plus":
-        algorithm = Mamlplus(n_shots, n_ways, n_episodes, n_query, n_tests, train_dataset, test_dataset,
-                             n_repeats, n_box_plots, eval_inter, beta_1, beta_2, xbox_multiples)
+        algorithm = Mamlplus(**args)
 
     elif alg_name == "reptile":
-        algorithm = Reptile(n_shots, n_ways, n_episodes, n_query, n_tests, train_dataset, test_dataset,
-                            n_repeats, n_box_plots, eval_inter, beta_1, beta_2, xbox_multiples)
+        algorithm = Reptile(**args)
     else:
-        # todo define specific Error for wrong algorithm name
+        # todo define specific Assert for wrong algorithm name etc..
         algorithm = []
         input()
 
     # add general variables to a main configuration for the log files
-    main_config = algorithm.spec_config.copy()
-
-    main_config["n_shots"] = n_shots
-    main_config["n_ways"] = n_ways
-    main_config["n_episodes"] = n_episodes
-    main_config["n_query"] = n_query
-    main_config["n_tests"] = n_tests
-    main_config["n_fin_episodes"] = n_fin_episodes
+    main_config = {**algorithm.spec_config.copy(), **args}
     # TRAIN MODEL FOR N REPETITIONS:
     for repeat in range(n_repeats):
 
@@ -230,7 +227,7 @@ if __name__ == "__main__":
                 # find the last existing repetition of the simulation
                 list_existing_folders.append(int(str(directory)[-11]))
 
-            simul_repeat_dir = max(list_existing_folders) + 1
+            simul_repeat_dir = max(list_existing_folders) + 10
             new_directory = "results/" + alg_name + "_" + str(n_shots) + "_Shots_" + \
                             str(n_episodes) + "_Episodes_" + str(simul_repeat_dir) + "_simul_num"
             os.mkdir(new_directory)
@@ -246,7 +243,7 @@ if __name__ == "__main__":
         # SAVE CONFIGURATION FILES:
 
         with open(main_config_file_name, 'w') as f:
-            json.dump(main_config, f, indent=4)
+            json.dump(main_config, f, indent=4, default=lambda obj: obj.__dict__)
 
         ## GENERATE BOX PLOTS FOR TRAINING AND EVALUATION
 
@@ -278,10 +275,7 @@ if __name__ == "__main__":
         with open(new_directory + "/" + final_accuracy_filename, "w") as text_file:
             text_file.write(final_accuracy_string)
 
-    # todo: merge the two task dataset into 1
     # todo: check for names for injection and embedding
     # todo: define parser for injection/embedding and config file
-    # todo: complete modification of other algorithms
-    # todo: maybe use other script for the final episodes functions
+    # todo: maybe use main Alg script for the final episodes functions
     # todo: save into a log losses results after experiments
-    # todo: define a parent class for algorithms

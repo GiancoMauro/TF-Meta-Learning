@@ -40,10 +40,8 @@ class Weighting_Net(AlgorithmsABC):
     Core Implementation of the Weighting Network algorithm (Both Embedding and Injection)
     """
 
-    def __init__(self, n_shots, n_ways, n_episodes, n_query, n_tests, train_dataset, test_dataset,
-                 n_repeat, n_box_plots, eval_inter, beta_1, beta_2, xbox_multiples):
-        super(Weighting_Net, self).__init__(n_shots, n_ways, n_episodes, n_query, n_tests, train_dataset, test_dataset,
-                                            n_repeat, n_box_plots, eval_inter, beta_1, beta_2, xbox_multiples)
+    def __init__(self, **kwargs):
+        super(Weighting_Net, self).__init__(**kwargs)
 
         self.alg_name = "Weighting_Net_"
 
