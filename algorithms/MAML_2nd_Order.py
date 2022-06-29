@@ -8,23 +8,15 @@ Finn, Chelsea, Pieter Abbeel, and Sergey Levine. "Model-agnostic meta-learning f
 https://github.com/cbfinn/maml
 """
 
-import json
 import numpy as np
-import os
 from pathlib import Path
-import re
 import tensorflow as tf
 from tensorflow import keras
 import time
-# import sys
 import warnings
-# sys.path.append("../")
 from networks.conv_modules import conv_base_model
-from utils.box_plot_function import generate_box_plot
 from utils.json_functions import read_json
 from utils.statistics import mean_confidence_interval
-from utils.task_dataset_gen_meta import Dataset_Meta
-from utils.text_log_function import generate_text_logs
 
 
 class Maml2nd_Order:
@@ -94,7 +86,7 @@ class Maml2nd_Order:
         """
         main function for the training and evaluation of the meta learning algorithm
 
-        :return: full_pipeline_model, general_training_val_acc, general_eval_val_acc
+        :return: base_model, general_training_val_acc, general_eval_val_acc
         """
 
         base_model = conv_base_model(self.n_ways, self.conv_filters_number, self.conv_kernel_size)

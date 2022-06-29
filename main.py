@@ -10,6 +10,7 @@ from utils.task_dataset_gen_meta import Dataset_Meta
 from algorithms.Weighting_Net import Weighting_Net
 from algorithms.MetaWeighting_Net import MetaWeighting_Net
 from algorithms.MAML_2nd_Order import Maml2nd_Order
+from algorithms.MAML_1st_Order import Maml1st_Order
 from utils.text_log_function import generate_text_logs
 
 """
@@ -27,7 +28,7 @@ if __name__ == "__main__":
         "--alg",
         help="available meta learning algorithms [weight_net, meta_weight_net, reptile, maml2nd, maml1st, maml_plus]",
         type=str,
-        default="maml2nd"  # "weight_net"
+        default="maml1st"  # "weight_net"
     )
     parser.add_argument(
         "--n_ways",
@@ -179,6 +180,9 @@ if __name__ == "__main__":
     elif alg_name == "maml2nd":
         algorithm = Maml2nd_Order(n_shots, n_ways, n_episodes, n_query, n_tests, train_dataset, test_dataset,
                                   n_repeats, n_box_plots, eval_inter, beta_1, beta_2, xbox_multiples)
+    elif alg_name == "maml1st":
+        algorithm = Maml1st_Order(n_shots, n_ways, n_episodes, n_query, n_tests, train_dataset, test_dataset,
+                                  n_repeats, n_box_plots, eval_inter, beta_1, beta_2, xbox_multiples)
     else:
         algorithm = []
         input()
@@ -271,3 +275,4 @@ if __name__ == "__main__":
     # todo: complete modification of other algorithms
     # todo: maybe use other script for the final episodes functions
     # todo: save into a log losses results after experiments
+    # todo: define a parent class for algorithms
