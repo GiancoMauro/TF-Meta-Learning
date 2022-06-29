@@ -9,340 +9,247 @@ Original Implementation from Keras: ADMoreau: Few-Shot learning with Reptile
 https://keras.io/examples/vision/reptile/
 """
 
-import json
-import matplotlib.pyplot as plt
 import numpy as np
-import os
 from pathlib import Path
-import re
 import tensorflow as tf
 from tensorflow import keras
 import time
 import warnings
 from networks.conv_modules import conv_base_model
-from utils.box_plot_function import generate_box_plot
 from utils.json_functions import read_json
 from utils.statistics import mean_confidence_interval
-from utils.task_dataset_gen_meta import Dataset_Meta
-from utils.text_log_function import generate_text_logs
 
 
-main_config_file = "../configurations/main_config.json"
-main_config_file = Path(main_config_file)
+class Reptile:
+    """
+        Core Implementation of the Reptile algorithm
+        """
 
-main_config = read_json(main_config_file)
+    def __init__(self, n_shots, n_ways, n_episodes, n_query, n_tests, train_dataset, test_dataset,
+                 n_repeat, n_box_plots, eval_inter, beta_1, beta_2, xbox_multiples):
+        self.beta1 = beta_1
+        self.beta2 = beta_2
+        self.episodes = n_episodes
+        self.eval_interval = eval_inter
+        self.experiments_num = n_repeat
+        self.num_box_plots = n_box_plots
+        self.xbox_multiples = xbox_multiples
+        self.train_dataset = train_dataset
+        self.test_dataset = test_dataset
 
-beta1 = main_config["beta1"]
-beta2 = main_config["beta2"]
+        self.n_ways = n_ways
+        self.support_train_shots = n_shots
+        self.query_shots = n_query
 
-# number of inner loop episodes - mini batch tasks training. In the paper 200K
-episodes = main_config["episodes"]
+        self.test_shots = n_tests
 
-# After how many meta training episodes, make an evaluation?
-eval_interval = main_config["eval_interval"]
+        self.alg_name = "Reptile_"
 
-# number of times that the experiment has to be repeated
-experiments_num = main_config["num_exp_repetitions"]
+        spec_config_file = "configurations/Reptile.json"
+        spec_config_file = Path(spec_config_file)
 
-# num of box plots for evaluation
-num_box_plots = main_config["num_boxplots"]
-# number of simulations per boxplot wanted in the final plot
-boxes_eval = int(round(episodes / num_box_plots))
+        self.spec_config = read_json(spec_config_file)
 
-# inner loop - training on tasks number of shots (samples per class in mini-batch)
-support_train_shots = main_config["support_train_shots"]  # inner_shots
+        self.conv_filters_number = self.spec_config["conv_filters_per_layer"]
+        self.conv_kernel_size = self.spec_config["conv_kernel_size"]
 
-# Num of test samples for evaluation per class. Tot Samples = (num of classes * eval_test_shots). Default 1
-test_shots = main_config["test_shots"]
-# images used to test the algorithm after the few shot learning phase.
-# outer loop - final training on tasks number of shots. Num of training samples = (num of classes * final_train_shots)
-# Num of test samples for final testing per class. Tot Samples = (num of classes * test_shots)
-# test_shots = 200
-# 80 * num classes (5) = 400
+        # inner loop learning rate of the Adam optimizer:
+        self.internal_learning_rate = self.spec_config["internal_learning_rate"]
 
-# change to smooth as much as possible the bar-range plot (e.g. if 10 means 10 * num_classes)
-classes = main_config["classes"]
+        # step size for weights update over the mini-batch iterations. Bigger it is, bigger are the meta step updates...
+        self.meta_step_size = self.spec_config["meta_step_size"]
+        # outer step size -- learning importance over meta steps
 
-# number of final evaluations of the algorithm
-number_of_evaluations = main_config["number_of_evaluations_final"]
+        # size of the training and evaluation batches (independent by the number of sample per class)
+        self.batch_size = self.spec_config["batch_size"]
 
-dataset_config_file = "../configurations/general_config/dataset_config.json"
-dataset_config_file = Path(dataset_config_file)
+        # how many training repetitions over the mini-batch in task learning phase?
+        self.base_train_epochs = self.spec_config["base_train_epochs"]  # (inner_iters per new tasks)
 
-dataset_config = read_json(dataset_config_file)
+        # how many training repetitions over the mini-batch in evaluation phase?  EVAL TASK
+        self.eval_train_epochs = self.spec_config["eval_train_epochs"]
 
-spec_config_file = "../configurations/Reptile.json"
-spec_config_file = Path(spec_config_file)
+        if (self.n_ways * self.support_train_shots) % self.batch_size == 0:
+            # even batch size
+            self.num_batches_per_inner_base_epoch = (self.n_ways * self.support_train_shots) / self.batch_size
+        else:
+            self.num_batches_per_inner_base_epoch = round(
+                (self.n_ways * self.support_train_shots) / self.batch_size) + 1
 
-spec_config = read_json(spec_config_file)
+        self.alg_name += str(self.n_ways) + "_Classes_"
 
-Algorithm_name = spec_config["algorithm_name"] + "_"
+    def train_and_evaluate(self):
+        """
+        main function for the training and evaluation of the meta learning algorithm
 
-# inner loop learning rate of the Adam optimizer:
-internal_learning_rate = spec_config["internal_learning_rate"]
+        :return: base_model, general_training_val_acc, general_eval_val_acc
+        """
 
-# step size for weights update over the mini-batch iterations. Bigger it is, bigger are the meta step updates..
-meta_step_size = spec_config["meta_step_size"]  # outer step size -- learning importance over meta steps
+        base_model = conv_base_model(self.n_ways, self.conv_filters_number, self.conv_kernel_size)
+        base_model.compile()
+        base_model.summary()
+        optimizer = keras.optimizers.Adam(learning_rate=self.internal_learning_rate,
+                                          beta_1=self.beta1, beta_2=self.beta2)
 
-# size of the training and evaluation batches (independent by the number of sample per class)
-batch_size = spec_config["batch_size"]
+        general_training_val_acc = []
+        general_eval_val_acc = []
+        training_val_acc = []
+        eval_val_acc = []
+        buffer_training_val_acc = []
+        buffer_eval_val_acc = []
+        ##### episodes loop #####
 
-# how many training repetitions over the mini-batch in task learning phase?
-base_train_epochs = spec_config["base_train_epochs"]  # (inner_iters per new tasks)
-
-# how many training repetitions over the mini-batch in evaluation phase?  EVAL TASK
-eval_train_epochs = spec_config["eval_train_epochs"]
-
-plot_config_file = "../configurations/general_config/plot_config.json"
-plot_config_file = Path(plot_config_file)
-
-plot_config = read_json(plot_config_file)
-
-xbox_multiples = []
-xbox_labels = []
-
-# add all the multiples of boxes eval to a list:
-for count in range(0, num_box_plots):
-
-    if boxes_eval * count <= episodes:
-        xbox_multiples.append(boxes_eval * count)
-
-# add the last value if the last multiple is less than It
-if xbox_multiples[-1] < episodes:
-    xbox_multiples.append(episodes)
-# if the number is bigger, than substitute the last value
-elif xbox_multiples[-1] > episodes:
-    xbox_multiples[-1] = episodes
-
-# # create a list of labels for the x axes in the bar plot
-
-for counter, multiple in enumerate(xbox_multiples):
-    if counter != len(xbox_multiples) - 1:
-        # up to the second-last iteration
-        xbox_labels.append(str(multiple) + "-" + str(xbox_multiples[counter + 1] - 1))
-
-print("Box Plots: " + str(xbox_labels))
-
-train_dataset = Dataset_Meta(training=True, config=dataset_config, classes=classes)
-test_dataset = Dataset_Meta(training=False, config=dataset_config, classes=classes)
-
-Algorithm_name += str(classes) + "_Classes_"
-
-for experim_num in range(experiments_num):
-
-    base_model = conv_base_model(dataset_config, spec_config, classes)
-    base_model.compile()
-    base_model.summary()
-    optimizer = keras.optimizers.Adam(learning_rate=internal_learning_rate, beta_1=beta1, beta_2=beta2)
-
-    general_training_val_acc = []
-    general_eval_val_acc = []
-    training_val_acc = []
-    eval_val_acc = []
-    buffer_training_val_acc = []
-    buffer_eval_val_acc = []
-    ##### episodes loop #####
-
-    for episode in range(episodes):
-        print(episode)
-        frac_done = episode / episodes
-        cur_meta_step_size = (1 - frac_done) * meta_step_size
-        # Temporarily save the weights from the model.
-        old_vars = base_model.get_weights()
-        # Get a sample from the full dataset.
-        mini_dataset = train_dataset.get_mini_dataset(
-            batch_size, base_train_epochs, support_train_shots, classes
-        )
-        for images, labels in mini_dataset:
-            # for each data batch
-            with tf.GradientTape() as tape:
-                # random initialization of weights
-                preds = base_model(images)
-                loss = keras.losses.sparse_categorical_crossentropy(labels, preds)
-            grads = tape.gradient(loss, base_model.trainable_weights)
-            optimizer.apply_gradients(zip(grads, base_model.trainable_weights))
-        new_vars = base_model.get_weights()
-        # Perform optimization for the meta step. Use the final weights obtained after N inner batches
-        for var in range(len(new_vars)):
-            new_vars[var] = old_vars[var] + (
-                    (new_vars[var] - old_vars[var]) * cur_meta_step_size
+        for episode in range(self.episodes):
+            print(episode)
+            frac_done = episode / self.episodes
+            cur_meta_step_size = (1 - frac_done) * self.meta_step_size
+            # Temporarily save the weights from the model.
+            old_vars = base_model.get_weights()
+            # Get a sample from the full dataset.
+            mini_dataset = self.train_dataset.get_mini_dataset(
+                self.batch_size, self.base_train_epochs, self.support_train_shots, self.n_ways
             )
-        # After the meta-learning step, reload the newly-trained weights into the model.
-        base_model.set_weights(new_vars)
-        # Evaluation loop
-        if episode % eval_interval == 0:
-            if (episode in xbox_multiples or episode == episodes - 1) and episode != 0:
-                # when I have enough samples for a box of the box-range plot, add these values to the general list
-                # condition: the meta iter is a multiple of the x_box multiples or last iteration and meta_iter is
-                # not 0.
-                general_training_val_acc.append(buffer_training_val_acc)
-                general_eval_val_acc.append(buffer_eval_val_acc)
-                buffer_training_val_acc = []
-                buffer_eval_val_acc = []
+            for images, labels in mini_dataset:
+                # for each data batch
+                with tf.GradientTape() as tape:
+                    # random initialization of weights
+                    preds = base_model(images)
+                    loss = keras.losses.sparse_categorical_crossentropy(labels, preds)
+                grads = tape.gradient(loss, base_model.trainable_weights)
+                optimizer.apply_gradients(zip(grads, base_model.trainable_weights))
+            new_vars = base_model.get_weights()
+            # Perform optimization for the meta step. Use the final weights obtained after N inner batches
+            for var in range(len(new_vars)):
+                new_vars[var] = old_vars[var] + (
+                        (new_vars[var] - old_vars[var]) * cur_meta_step_size
+                )
+            # After the meta-learning step, reload the newly-trained weights into the model.
+            base_model.set_weights(new_vars)
+            # Evaluation loop
+            if episode % self.eval_interval == 0:
+                if (episode in self.xbox_multiples or episode == self.episodes - 1) and episode != 0:
+                    # when I have enough samples for a box of the box-range plot, add these values to the general list
+                    # condition: the meta iter is a multiple of the x_box multiples or last iteration and meta_iter is
+                    # not 0.
+                    general_training_val_acc.append(buffer_training_val_acc)
+                    general_eval_val_acc.append(buffer_eval_val_acc)
+                    buffer_training_val_acc = []
+                    buffer_eval_val_acc = []
 
-            accuracies = []
-            for dataset in (train_dataset, test_dataset):
-                # set it to zero for validation and then test)
-                num_correct = 0
-                # Sample a mini dataset from the full dataset.
-                train_set, _, _, test_images, test_labels, task_labels = dataset.get_mini_dataset(
-                    batch_size, eval_train_epochs, support_train_shots, classes, test_split=True,
-                    testing_sho=test_shots)
+                accuracies = []
+                for dataset in (self.train_dataset, self.test_dataset):
+                    # set it to zero for validation and then test)
+                    num_correct = 0
+                    # Sample a mini dataset from the full dataset.
+                    train_set, _, _, test_images, test_labels, task_labels = dataset.get_mini_dataset(
+                        self.batch_size, self.eval_train_epochs, self.support_train_shots, self.n_ways, test_split=True,
+                        testing_sho=self.test_shots)
 
-                old_vars = base_model.get_weights()
-                # Train on the samples and get the resulting accuracies.
-                for images, labels in train_set:
-                    with tf.GradientTape() as tape:
-                        preds = base_model(images)
-                        loss = keras.losses.sparse_categorical_crossentropy(labels, preds)
-                    grads = tape.gradient(loss, base_model.trainable_weights)
-                    optimizer.apply_gradients(zip(grads, base_model.trainable_weights))
+                    old_vars = base_model.get_weights()
+                    # Train on the samples and get the resulting accuracies.
+                    for images, labels in train_set:
+                        with tf.GradientTape() as tape:
+                            preds = base_model(images)
+                            loss = keras.losses.sparse_categorical_crossentropy(labels, preds)
+                        grads = tape.gradient(loss, base_model.trainable_weights)
+                        optimizer.apply_gradients(zip(grads, base_model.trainable_weights))
 
-                # test phase after model evaluation
-                eval_preds = base_model.predict(test_images)
-                predicted_classes_eval = []
-                for prediction_sample in eval_preds:
-                    predicted_classes_eval.append(tf.argmax(np.asarray(prediction_sample)))
-                for index, prediction in enumerate(predicted_classes_eval):
-                    if prediction == test_labels[index]:
-                        num_correct += 1
+                    # test phase after model evaluation
+                    eval_preds = base_model.predict(test_images)
+                    predicted_classes_eval = []
+                    for prediction_sample in eval_preds:
+                        predicted_classes_eval.append(tf.argmax(np.asarray(prediction_sample)))
+                    for index, prediction in enumerate(predicted_classes_eval):
+                        if prediction == test_labels[index]:
+                            num_correct += 1
 
-                # Reset the weights after getting the evaluation accuracies.
-                base_model.set_weights(old_vars)
-                # for both validation and testing, accuracy is done over the length of test samples
-                accuracies.append(num_correct / len(test_labels))
+                    # Reset the weights after getting the evaluation accuracies.
+                    base_model.set_weights(old_vars)
+                    # for both validation and testing, accuracy is done over the length of test samples
+                    accuracies.append(num_correct / len(test_labels))
 
-            # meta learning test after validation => Validation because it's done on training images not used in the
-            # train
-            training_val_acc.append(accuracies[0])
-            buffer_training_val_acc.append(accuracies[0])
-            # test accuracy
-            eval_val_acc.append(accuracies[1])
-            buffer_eval_val_acc.append(accuracies[1])
+                # meta learning test after validation => Validation because it's done on training images not used in the
+                # train
+                training_val_acc.append(accuracies[0])
+                buffer_training_val_acc.append(accuracies[0])
+                # test accuracy
+                eval_val_acc.append(accuracies[1])
+                buffer_eval_val_acc.append(accuracies[1])
 
-            if episode % 5 == 0:
-                print("batch %d: eval on train=%f eval on test=%f" % (episode, accuracies[0], accuracies[1]))
+                if episode % 5 == 0:
+                    print("batch %d: eval on train=%f eval on test=%f" % (episode, accuracies[0], accuracies[1]))
 
-    # create sim_directories
-    # assume that no other equal simulations exist
-    simul_repeat_dir = 1
+        return base_model, general_training_val_acc, general_eval_val_acc
 
-    if not os.path.exists("../results/"):
-        os.mkdir("../results/")
+    def final_evaluation(self, base_model, final_episodes):
+        """
+        Function that computes the performances of the generated generalization models of a set of final tasks
+        :param base_model: generalization model
+        :param final_episodes: number of final episodes for the evaluation
+        :return: total_accuracy, h, ms_prediction_latency
+        """
+        ############ EVALUATION OVER FINAL TASKS ###############
 
-    new_directory = "../results/" + Algorithm_name + str(support_train_shots) + "_Shots_" + \
-                    str(episodes) + "_Episodes_" + str(experim_num) + "_simul_num"
+        ############ EVALUATION OVER FINAL TASKS ###############
 
-    if not os.path.exists(new_directory):
-        os.mkdir(new_directory)
-    else:
-        Pattern = re.compile(new_directory[:-1])
-        folder_list = os.listdir()
-        filtered = [folder for folder in folder_list if Pattern.match(folder)]
-        list_existing_folders = []
-        for directory in list(filtered):
-            # find the last existing repetition of the simulation
-            list_existing_folders.append(int(str(directory)[-1]))
+        test_accuracy = []
 
-        simul_repeat_dir = max(list_existing_folders) + 1
-        new_directory = new_directory[:-len(str(simul_repeat_dir))] + "_" + str(simul_repeat_dir)
-        os.mkdir(new_directory)
+        base_weights = base_model.get_weights()
 
-    # SAVE MODEL:
+        time_stamps_adaptation = []
+        time_stamps_single_pred = []
 
-    base_model.save_weights(
-        new_directory + "/base_model_weights_" + Algorithm_name + str(episodes) + ".h5")
+        optimizer = keras.optimizers.Adam(learning_rate=self.internal_learning_rate,
+                                          beta_1=self.beta1, beta_2=self.beta2)
 
-    #######################
-    main_config_file_name = new_directory + "/" + "main_config.json"
-    alg_config_file_name = new_directory + "/" + Algorithm_name + str(episodes) + "_config.json"
+        for task_num in range(0, final_episodes):
 
-    # SAVE CONFIGURATION FILES:
-    with open(alg_config_file_name, 'w') as f:
-        json.dump(main_config, f, indent=4)
+            print("final task num: " + str(task_num))
+            train_set_task, _, _, test_images_task, test_labels_task, task_labs = self.test_dataset.get_mini_dataset(
+                self.batch_size, self.eval_train_epochs, self.support_train_shots, self.n_ways,
+                test_split=True, testing_sho=self.test_shots)
+            # train the Base model over the 1-shot Task:
+            adaptation_start = time.time()
+            for images, labels in train_set_task:
+                with tf.GradientTape() as tape:
+                    preds = base_model(images)
+                    loss = keras.losses.sparse_categorical_crossentropy(labels, preds)
+                grads = tape.gradient(loss, base_model.trainable_weights)
+                optimizer.apply_gradients(zip(grads, base_model.trainable_weights))
+            adaptation_end = time.time()
+            time_stamps_adaptation.append(adaptation_end - adaptation_start)
+            # predictions for the task
+            eval_preds = base_model.predict(test_images_task)
 
-    with open(main_config_file_name, 'w') as f:
-        json.dump(spec_config, f, indent=4)
+            single_pred_start = time.time()
+            pred_example = np.expand_dims(test_images_task[0], 0)
+            single_pred = base_model.predict(pred_example)
+            single_pred_end = time.time()
+            time_stamps_single_pred.append(single_pred_end - single_pred_start)
 
-    ## GENERATE BOX PLOTS FOR TRAINING AND EVALUATION
+            predicted_classes = []
+            for prediction_sample in eval_preds:
+                predicted_classes.append(tf.argmax(np.asarray(prediction_sample)))
 
-    train_eval_boxes, test_eval_boxes = generate_box_plot(plot_config, Algorithm_name, classes, episodes,
-                                                          new_directory, xbox_labels,
-                                                          general_training_val_acc, general_eval_val_acc)
+            num_correct_out_loop = 0
+            for index, prediction in enumerate(predicted_classes):
+                if prediction == test_labels_task[index]:
+                    num_correct_out_loop += 1
 
-    ###################### SAVE BOX PLOTS LOGS ###################
+            test_accuracy_new_val = num_correct_out_loop / len(test_images_task)
+            test_accuracy.append(round(test_accuracy_new_val * 100, 2))
 
-    generate_text_logs(Algorithm_name, new_directory, xbox_labels, episodes, train_eval_boxes, test_eval_boxes,
-                       general_training_val_acc, general_eval_val_acc)
+            # reset the network weights to the base ones
+            # Reset the weights after getting the evaluation accuracies.
+            base_model.set_weights(base_weights)
 
-    ############ EVALUATION OVER FINAL TASKS ###############
+        total_accuracy = np.average(test_accuracy)
 
-    test_accuracy = []
+        test_accuracy, h = mean_confidence_interval(np.array(test_accuracy) / 100)
 
-    base_weights = base_model.get_weights()
+        ms_latency = np.mean(time_stamps_adaptation) * 1e3
 
-    time_stamps_adaptation = []
-    time_stamps_single_pred = []
+        ms_prediction_latency = np.mean(time_stamps_single_pred) * 1e3
 
-    for task_num in range(0, number_of_evaluations):
+        return total_accuracy, h, ms_latency, ms_prediction_latency
 
-        print("final task num: " + str(task_num))
-        train_set_task, _, _, test_images_task, test_labels_task, task_labs = test_dataset.get_mini_dataset(
-            batch_size, eval_train_epochs, support_train_shots, classes, test_split=True, testing_sho=test_shots)
-        # train the Base model over the 1-shot Task:
-        adaptation_start = time.time()
-        for images, labels in train_set_task:
-            with tf.GradientTape() as tape:
-                preds = base_model(images)
-                loss = keras.losses.sparse_categorical_crossentropy(labels, preds)
-            grads = tape.gradient(loss, base_model.trainable_weights)
-            optimizer.apply_gradients(zip(grads, base_model.trainable_weights))
-        adaptation_end = time.time()
-        time_stamps_adaptation.append(adaptation_end - adaptation_start)
-        # predictions for the task
-        eval_preds = base_model.predict(test_images_task)
-
-        single_pred_start = time.time()
-        pred_example = np.expand_dims(test_images_task[0], 0)
-        single_pred = base_model.predict(pred_example)
-        single_pred_end = time.time()
-        time_stamps_single_pred.append(single_pred_end - single_pred_start)
-
-        predicted_classes = []
-        for prediction_sample in eval_preds:
-            predicted_classes.append(tf.argmax(np.asarray(prediction_sample)))
-
-        num_correct_out_loop = 0
-        for index, prediction in enumerate(predicted_classes):
-            if prediction == test_labels_task[index]:
-                num_correct_out_loop += 1
-
-        test_accuracy_new_val = num_correct_out_loop / len(test_images_task)
-        test_accuracy.append(round(test_accuracy_new_val * 100, 2))
-
-        # reset the network weights to the base ones
-        # Reset the weights after getting the evaluation accuracies.
-        base_model.set_weights(base_weights)
-
-    total_accuracy = np.average(test_accuracy)
-
-    test_accuracy, h = mean_confidence_interval(np.array(test_accuracy) / 100)
-
-    ms_latency = np.mean(time_stamps_adaptation) * 1e3
-
-    ms_pred_latency = np.mean(time_stamps_single_pred) * 1e3
-
-    final_accuracy_filename = Algorithm_name + str(number_of_evaluations) + " Test Tasks_FINAL_ACCURACY.txt"
-
-    final_accuracy_string = "The average accuracy on: " + str(number_of_evaluations) + \
-                            " Test Tasks, with: " + str(test_shots) + "samples per class, is: " \
-                            + str(total_accuracy) + "% with a 95% confidence interval of +- " + str(h * 100) + "%"
-
-    final_accuracy_string += "\n" + "The latency time for a final training is: " \
-                             + str(ms_latency) + " milliseconds"
-
-    final_accuracy_string += "\n" + "The latency time for a single prediction is: " \
-                             + str(ms_pred_latency) + " milliseconds"
-
-    with open(new_directory + "/" + final_accuracy_filename, "w") as text_file:
-        text_file.write(final_accuracy_string)
