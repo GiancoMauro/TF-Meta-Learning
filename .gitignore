@@ -5,6 +5,7 @@ data/images_evaluation/
 *.h5
 *.pdf
 *.txt
+**/__pycache__
 results/
 networks/weighting_modules_backup_105.py
 networks/weighting_modules_resized_50.py
