@@ -29,7 +29,7 @@ if __name__ == "__main__":
         "--alg",
         help="available meta learning algorithms [weight_net, meta_weight_net, reptile, maml2nd, maml1st, maml_plus]",
         type=str,
-        default="reptile"  # "weight_net"
+        default="weight_net"
     )
     parser.add_argument(
         "--n_ways",
