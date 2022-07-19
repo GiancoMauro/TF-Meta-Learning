@@ -92,7 +92,7 @@ class Reptile(AlgorithmsABC):
             # Temporarily save the weights from the model.
             old_vars = base_model.get_weights()
             # Get a sample from the full dataset.
-            train_images, train_labels, query_images, query_labels, tsk_labels = \
+            train_images, train_labels, _, _, tsk_labels = \
                 self.train_dataset.get_mini_dataset(self.support_train_shots, self.n_ways, query_split=True,
                                                     query_sho=self.query_shots
                                                     )

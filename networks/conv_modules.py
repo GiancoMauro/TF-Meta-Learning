@@ -3,6 +3,7 @@ from tensorflow import keras
 from pathlib import Path
 from utils.json_functions import read_json
 
+
 def conv_bn(x_l, filt_num=128, kern_size=3, stride=2, gaussian_noise=False):
     """
     Definition of the single convolutional layer for the model in the internal loop

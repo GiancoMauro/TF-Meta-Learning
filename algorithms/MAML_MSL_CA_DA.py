@@ -72,7 +72,7 @@ class Mamlplus(AlgorithmsABC):
         # total number of batches for every meta iteration: needed for BNRS + BNWB
         self.tot_num_base_batches = self.base_train_epochs * self.num_batches_per_inner_base_epoch
 
-        self.alg_name += str(n_ways) + "_Classes_"
+        self.alg_name += str(self.n_ways) + "_Classes_"
 
     def train_and_evaluate(self):
         """
