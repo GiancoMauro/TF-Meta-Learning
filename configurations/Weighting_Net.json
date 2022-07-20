@@ -1,6 +1,6 @@
 {
 	"algorithm_name": "Weighting Net",
-	"embedding_dimension": 64,
+	"embedding_dimension": 32,
 	"weighting_dimension": 64,
 	"internal_learning_rate": 0.0003,
 	"injection_module": true,
