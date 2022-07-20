@@ -8,7 +8,7 @@ ADD INFO PAPER
 
 # Requirements
 
-Python 3.6
+Python >=l 3.6.8
 
 Matplotlib 3.3.1,
 Numpy 1.19,
