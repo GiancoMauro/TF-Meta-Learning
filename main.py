@@ -212,7 +212,7 @@ if __name__ == "__main__":
         if not os.path.exists("/results/"):
             os.mkdir("/results/")
 
-        new_directory = "results/" + alg_name + "_" + str(n_shots) + "_Shots_" + \
+        new_directory = "results/" + alg_name + "_" + str(n_shots) + "_Shots_" + str(n_ways) + "_Ways_" + \
                         str(n_episodes) + "_Episodes_" + str(repeat) + "_simul_num"
 
         if not os.path.exists(new_directory):
@@ -228,7 +228,7 @@ if __name__ == "__main__":
                 list_existing_folders.append(int(str(directory)[-11]))
 
             simul_repeat_dir = max(list_existing_folders) + 10
-            new_directory = "results/" + alg_name + "_" + str(n_shots) + "_Shots_" + \
+            new_directory = "results/" + alg_name + "_" + str(n_shots) + "_Shots_" + str(n_ways) + "_Ways_" + \
                             str(n_episodes) + "_Episodes_" + str(simul_repeat_dir) + "_simul_num"
             os.mkdir(new_directory)
 
