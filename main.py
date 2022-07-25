@@ -35,13 +35,13 @@ if __name__ == "__main__":
         "--n_ways",
         help="number of ways of the experiment [2, 5, 10, ...]",
         type=int,
-        default=2  # 5
+        default=5
     )
     parser.add_argument(
         "--n_shots",
         help="number of shots of the experiment [1, 2, 5, 10, ...]",
         type=int,
-        default=1
+        default=10
     )
     parser.add_argument(
         "--n_tests",
@@ -209,8 +209,8 @@ if __name__ == "__main__":
         # create sim_directories
         # assume that no other equal simulations exist
 
-        if not os.path.exists("/results/"):
-            os.mkdir("/results/")
+        if not os.path.exists("results/"):
+            os.mkdir("results/")
 
         new_directory = "results/" + alg_name + "_" + str(n_shots) + "_Shots_" + str(n_ways) + "_Ways_" + \
                         str(n_episodes) + "_Episodes_" + str(repeat) + "_simul_num"
