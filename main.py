@@ -120,6 +120,8 @@ if __name__ == "__main__":
     # num of box plots for evaluation
     n_box_plots = int(name_args.n_box_plots)
 
+    print("Currently Running {}, with {} support and {} tests shots. {} n-ways.".format(alg_name, n_shots,
+                                                                                        n_tests, n_ways))
     # todo add description to README
     # # number of query shots for the algorithm during the training phase
     # n_query = int(name_args.n_query)

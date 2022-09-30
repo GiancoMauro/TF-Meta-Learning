@@ -44,6 +44,7 @@ class Dataset:
 
         for it in os.scandir(root_dir):
             if it.is_dir():
+                # todo generalize to not only omniglot
                 if "character" in it.path:
                     splits = it.path.split('\\')
                     path_name = splits[-2] + "/" + splits[-1]
