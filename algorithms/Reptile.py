@@ -9,16 +9,17 @@ Original Implementation from Keras: ADMoreau: Few-Shot learning with Reptile
 https://keras.io/examples/vision/reptile/
 """
 
-import numpy as np
+import time
 from pathlib import Path
+
+import numpy as np
 import tensorflow as tf
 from tensorflow import keras
-import time
-import warnings
+
+from algorithms.Algorithms_abc import AlgorithmsABC
 from networks.conv_modules import conv_base_model
 from utils.json_functions import read_json
 from utils.statistics import mean_confidence_interval
-from algorithms.Algorithms_abc import AlgorithmsABC
 
 
 class Reptile(AlgorithmsABC):

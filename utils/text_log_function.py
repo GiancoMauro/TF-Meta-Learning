@@ -3,7 +3,6 @@ import numpy as np
 
 def generate_text_logs(alg_name, new_directory, xbox_labels, meta_iters, train_eval_boxes, test_eval_boxes,
                        general_training_val_acc, general_eval_val_acc):
-
     """
     functions that produces a logs in regards to the box range plots according to the
     achieved results over meta iterations (both for training and test evaluations)

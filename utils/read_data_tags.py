@@ -1,7 +1,8 @@
-from pathlib import Path
-import sys
-import numpy as np
 import os
+from pathlib import Path
+
+import numpy as np
+
 from utils.json_functions import read_json
 
 dataset_config_file = "../configurations/general_config/dataset_config.json"

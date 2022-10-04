@@ -1,4 +1,5 @@
 from abc import ABC
+
 import tensorflow as tf
 
 
@@ -174,7 +175,7 @@ class Full_Pipeline(tf.keras.Model, ABC):
         query_features_ext = tf.experimental.numpy.moveaxis(query_features_ext, 0, 1)
         # extended query shape: (?, N_shots * N_ways, feature_dim, feature_dim, embedding_dim)
         comparison_features = self.concat([support_features_ext, query_features_ext])
-        comparison_features = tf.reshape(comparison_features, [-1, self.embedding_dim * 2, 
+        comparison_features = tf.reshape(comparison_features, [-1, self.embedding_dim * 2,
                                                                self.feature_dim, self.feature_dim])
         # comparison output shape: (?/N_shots, N_Ways * embedding_dim)
         weighting_features = self.comparison_model(comparison_features, num_shots_tr)

@@ -3,7 +3,6 @@ import matplotlib.pyplot as plt
 
 def generate_box_plot(config, alg_name, classes, meta_iters, new_directory, xbox_labels,
                       general_training_val_acc, general_eval_val_acc):
-
     """
     Functions that saves as a figure the trend of box range plots over meta iteration time
 

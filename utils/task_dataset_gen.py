@@ -1,7 +1,8 @@
-import numpy as np
-import matplotlib.pyplot as plt
-import random
 import os
+import random
+
+import matplotlib.pyplot as plt
+import numpy as np
 
 
 class Dataset:
@@ -163,7 +164,7 @@ class Dataset:
                 # without splitting, use all the images for training
                 rand_indexes = random.sample(os.listdir(local_folder), k=training_sho)
                 trn_images = np.array([np.expand_dims(np.array(plt.imread(local_folder + "/" + indx)), -1)
-                                            for indx in rand_indexes])
+                                       for indx in rand_indexes])
                 few_shot_train_images[class_idx * training_sho: (class_idx + 1) * training_sho] = trn_images
 
         # If it's the final task, then get the dataset

@@ -23,16 +23,17 @@ International conference on machine learning. PMLR, 2017.
 https://github.com/cbfinn/maml
 """
 
-import numpy as np
+import time
 from pathlib import Path
+
+import numpy as np
 import tensorflow as tf
 from tensorflow import keras
-import time
-import warnings
+
+from algorithms.Algorithms_abc import AlgorithmsABC
 from networks.weighting_modules import Full_Pipeline
 from utils.json_functions import read_json
 from utils.statistics import mean_confidence_interval, add_noise_images
-from algorithms.Algorithms_abc import AlgorithmsABC
 
 
 class MetaWeighting_Net(AlgorithmsABC):

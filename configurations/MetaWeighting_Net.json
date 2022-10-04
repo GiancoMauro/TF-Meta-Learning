@@ -1,11 +1,11 @@
 {
-	"algorithm_name": "Meta Weighting Net",
-	"meta_batches": 1,
-	"embedding_dimension": 32,
-	"weighting_dimension": 64,
-	"base_train_epochs": 1,
-	"outer_learning_rate": 0.0003,
-    "internal_learning_rate": 5e-05,
-	"injection_module": true,
-	"note": "if injection_module: false, use embedding module"
+  "algorithm_name": "Meta Weighting Net",
+  "meta_batches": 1,
+  "embedding_dimension": 32,
+  "weighting_dimension": 64,
+  "base_train_epochs": 1,
+  "outer_learning_rate": 0.0003,
+  "internal_learning_rate": 5e-05,
+  "injection_module": true,
+  "note": "if injection_module: false, use embedding module"
 }

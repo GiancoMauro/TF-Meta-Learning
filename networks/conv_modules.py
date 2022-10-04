@@ -1,6 +1,8 @@
-from tensorflow.keras import layers
-from tensorflow import keras
 from pathlib import Path
+
+from tensorflow import keras
+from tensorflow.keras import layers
+
 from utils.json_functions import read_json
 
 
