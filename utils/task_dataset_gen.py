@@ -23,6 +23,7 @@ class Dataset:
         self.channels = config["image_channels"]
         self.classes = classes
         self.classes_tags = config["classes_tags"]
+        self.dataset_name = config["name_dataset"]
 
         self.gen_labels = [str(lab) for lab in range(self.classes)]
 
@@ -42,10 +43,13 @@ class Dataset:
         root_dir: main directory
         """
 
+        folder_exp = None
+        if "Omniglot" in self.dataset_name:
+            folder_exp = "character"
+
         for it in os.scandir(root_dir):
             if it.is_dir():
-                # todo generalize to not only omniglot
-                if "character" in it.path:
+                if folder_exp is None or folder_exp in it.path:
                     splits = it.path.split('\\')
                     path_name = splits[-2] + "/" + splits[-1]
                     self.dirs.append(path_name)
