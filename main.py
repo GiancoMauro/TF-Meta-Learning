@@ -11,6 +11,7 @@ from algorithms.MetaWeighting_Net import MetaWeighting_Net
 from algorithms.Reptile import Reptile
 from algorithms.Weighting_Net import Weighting_Net
 from utils.box_plot_function import generate_box_plot
+from utils.boxplots_vs_normal_distr_function import generate_boxplot_vs_normal_dist
 from utils.json_functions import read_json
 from utils.task_dataset_gen import Dataset
 from utils.text_log_function import generate_text_logs
@@ -42,7 +43,7 @@ if __name__ == "__main__":
         "--n_shots",
         help="number of shots of the experiment [1, 2, 5, 10, ...]",
         type=int,
-        default=10
+        default=1
     )
     parser.add_argument(
         "--n_tests",
@@ -54,7 +55,7 @@ if __name__ == "__main__":
         "--n_episodes",
         help="number of episodes of the experiment [10, 100, 1000, 22000, ...]",
         type=int,
-        default=30  # 22000
+        default=200  # 22000
     )
     parser.add_argument(
         "--n_query",
@@ -66,7 +67,7 @@ if __name__ == "__main__":
         "--n_repeats",
         help="number of repetitions of the experiment [1, 2, 5, 10, ...]",
         type=int,
-        default=3
+        default=1
     )
     parser.add_argument(
         "--n_box_plots",
@@ -123,14 +124,6 @@ if __name__ == "__main__":
 
     print("Currently Running {}, with {} support and {} tests shots. {} n-ways.".format(alg_name, n_shots,
                                                                                         n_tests, n_ways))
-    # todo add description to README
-    # # number of query shots for the algorithm during the training phase
-    # n_query = int(name_args.n_query)
-    # # After how many meta training episodes, make an evaluation?
-    # eval_inter = int(name_args.eval_step)
-    # # adam beta parameters
-    # beta_1 = float(name_args.beta1)
-    # beta_2 = float(name_args.beta2)
 
     # number of simulations per boxplot wanted in the final plot
     boxes_eval = int(round(n_episodes / n_box_plots))
@@ -253,6 +246,10 @@ if __name__ == "__main__":
         train_eval_boxes, test_eval_boxes = generate_box_plot(plot_config, alg_name, n_ways, n_episodes,
                                                               new_directory, xbox_labels,
                                                               training_val_acc, eval_val_acc)
+
+        ############ OPTIONAL GENERATION OF BOX PLOTS VS NORMAL DISTRIBUTION ##############
+        generate_boxplot_vs_normal_dist(plot_config, alg_name, new_directory, n_episodes, xbox_labels, n_ways,
+                                        eval_val_acc)
 
         ###################### SAVE BOX PLOTS LOGS ###################
 
