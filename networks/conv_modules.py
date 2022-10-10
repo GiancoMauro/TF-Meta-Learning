@@ -30,7 +30,7 @@ def conv_base_model(n_ways, conv_filters_number, conv_kernel_size):
     function that generates the base model for optimization-based meta-learning experiments
     :param n_ways: number of ways for the classification experiment
     :param conv_filters_number: number of convolution filters of the second layer
-    :param conv_kernel_size: kernel size for the convulutional layers
+    :param conv_kernel_size: kernel size for the convolutional layers
     :return: generated base model
     """
     dataset_config_file = "configurations/general_config/dataset_config.json"

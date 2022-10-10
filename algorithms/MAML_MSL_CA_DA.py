@@ -19,19 +19,19 @@ import numpy as np
 import tensorflow as tf
 from tensorflow import keras
 
-from algorithms.Algorithms_abc import AlgorithmsABC
+from algorithms.Algorithms_ABC import AlgorithmsABC
 from networks.conv_modules import conv_base_model
 from utils.json_functions import read_json
 from utils.statistics import mean_confidence_interval
 
 
-class Mamlplus(AlgorithmsABC):
+class Maml_Plus(AlgorithmsABC):
     """
         Core Implementation of the Maml+MSL+CA+DA algorithm
         """
 
     def __init__(self, **kwargs):
-        super(Mamlplus, self).__init__(**kwargs)
+        super(Maml_Plus, self).__init__(**kwargs)
 
         self.alg_name = "Maml+MSL+CA+DA_"
 
@@ -133,7 +133,7 @@ class Mamlplus(AlgorithmsABC):
             # weights are normalized to Sum: 1
             epochs_counter = 0
             inner_batches_counter = 0
-            # IMPORTANT, in MAML, the external update depends by the weighted sum of the loss over epochs
+            # IMPORTANT, in MAML, the external update depends on the weighted sum of the loss over epochs
             old_vars = base_model.get_weights()
             for images, labels in mini_support_dataset:
                 if episode <= 50:  # (1/4) * episodes:
@@ -142,8 +142,8 @@ class Mamlplus(AlgorithmsABC):
 
                     # Step 5
                     with tf.GradientTape() as train_tape:
-                        support_preds = base_model(images)
-                        train_loss = keras.losses.sparse_categorical_crossentropy(labels, support_preds)
+                        support_predicts = base_model(images)
+                        train_loss = keras.losses.sparse_categorical_crossentropy(labels, support_predicts)
                     # Step 6
 
                     gradients = train_tape.gradient(train_loss, base_model.trainable_variables)
@@ -169,8 +169,8 @@ class Mamlplus(AlgorithmsABC):
                     with tf.GradientTape() as test_tape:
                         # Step 5
                         with tf.GradientTape() as train_tape:
-                            support_preds = base_model(images)
-                            train_loss = keras.losses.sparse_categorical_crossentropy(labels, support_preds)
+                            support_predicts = base_model(images)
+                            train_loss = keras.losses.sparse_categorical_crossentropy(labels, support_predicts)
 
                         # Step 6
                         gradients = train_tape.gradient(train_loss, base_model.trainable_variables)
@@ -245,15 +245,15 @@ class Mamlplus(AlgorithmsABC):
                     # Train on the samples and get the resulting accuracies.
                     for images, labels in train_set:
                         with tf.GradientTape() as tape:
-                            preds = base_model(images)
-                            loss = keras.losses.sparse_categorical_crossentropy(labels, preds)
+                            predicts = base_model(images)
+                            loss = keras.losses.sparse_categorical_crossentropy(labels, predicts)
                         grads = tape.gradient(loss, base_model.trainable_weights)
                         inner_optimizer.apply_gradients(zip(grads, base_model.trainable_weights))
 
                     # test phase after model evaluation
-                    eval_preds = base_model.predict(test_images)
+                    eval_predicts = base_model.predict(test_images)
                     predicted_classes_eval = []
-                    for prediction_sample in eval_preds:
+                    for prediction_sample in eval_predicts:
                         predicted_classes_eval.append(tf.argmax(np.asarray(prediction_sample)))
                     for index, prediction in enumerate(predicted_classes_eval):
                         if prediction == test_labels[index]:
@@ -289,7 +289,7 @@ class Mamlplus(AlgorithmsABC):
         base_weights = base_model.get_weights()
 
         time_stamps_adaptation = []
-        time_stamps_single_pred = []
+        time_stamps_single_predict = []
 
         inner_optimizer = keras.optimizers.Adam(learning_rate=self.internal_learning_rate,
                                                 beta_1=self.beta1, beta_2=self.beta2)
@@ -318,16 +318,16 @@ class Mamlplus(AlgorithmsABC):
             adaptation_end = time.time()
             time_stamps_adaptation.append(adaptation_end - adaptation_start)
             # predictions for the task
-            eval_preds = base_model.predict(test_images_task)
+            eval_predicts = base_model.predict(test_images_task)
 
-            single_pred_start = time.time()
-            pred_example = np.expand_dims(test_images_task[0], 0)
-            single_pred = base_model.predict(pred_example)
-            single_pred_end = time.time()
-            time_stamps_single_pred.append(single_pred_end - single_pred_start)
+            single_prediction_start = time.time()
+            prediction_example = np.expand_dims(test_images_task[0], 0)
+            base_model.predict(prediction_example)
+            single_prediction_end = time.time()
+            time_stamps_single_predict.append(single_prediction_end - single_prediction_start)
 
             predicted_classes = []
-            for prediction_sample in eval_preds:
+            for prediction_sample in eval_predicts:
                 predicted_classes.append(tf.argmax(np.asarray(prediction_sample)))
 
             num_correct_out_loop = 0
@@ -348,6 +348,6 @@ class Mamlplus(AlgorithmsABC):
 
         ms_latency = np.mean(time_stamps_adaptation) * 1e3
 
-        ms_prediction_latency = np.mean(time_stamps_single_pred) * 1e3
+        ms_prediction_latency = np.mean(time_stamps_single_predict) * 1e3
 
         return total_accuracy, h, ms_latency, ms_prediction_latency

@@ -42,7 +42,7 @@ class Injection_Module(tf.keras.Model, ABC):
 
 
 class Embedding_Module(tf.keras.Model, ABC):
-    """The Injection Module takes as distinct input the support and query
+    """The Embedding Module takes as distinct input the support and query
     examples and generate a feature representation in a lower space for the following comparison phase.
     The training of this module is only performed on the support data for the pure few shot learning."""
 

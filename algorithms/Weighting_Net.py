@@ -30,7 +30,7 @@ import numpy as np
 import tensorflow as tf
 from tensorflow import keras
 
-from algorithms.Algorithms_abc import AlgorithmsABC
+from algorithms.Algorithms_ABC import AlgorithmsABC
 from networks.weighting_modules import Full_Pipeline
 from utils.json_functions import read_json
 from utils.statistics import mean_confidence_interval
@@ -110,11 +110,11 @@ class Weighting_Net(AlgorithmsABC):
 
             with tf.GradientTape() as train_tape:
 
-                relat_pred = full_pipeline_model(support_images, query_images, self.support_train_shots,
-                                                 self.query_shots)
+                relational_predict = full_pipeline_model(support_images, query_images, self.support_train_shots,
+                                                         self.query_shots)
 
                 # learn the mapping
-                train_loss = keras.losses.sparse_categorical_crossentropy(query_labels, relat_pred)
+                train_loss = keras.losses.sparse_categorical_crossentropy(query_labels, relational_predict)
 
             gradients = train_tape.gradient(train_loss, full_pipeline_model.trainable_variables)
             gradients, _ = tf.clip_by_global_norm(gradients, 0.5)
@@ -143,11 +143,11 @@ class Weighting_Net(AlgorithmsABC):
                         self.support_train_shots, self.n_ways, test_split=True,
                         testing_sho=self.test_shots)
 
-                    eval_preds = full_pipeline_model(train_images, test_images, self.support_train_shots,
-                                                     self.test_shots)
+                    eval_predicts = full_pipeline_model(train_images, test_images, self.support_train_shots,
+                                                        self.test_shots)
 
                     predicted_classes_eval = []
-                    for prediction_sample in eval_preds:
+                    for prediction_sample in eval_predicts:
                         predicted_classes_eval.append(tf.argmax(np.asarray(prediction_sample)))
                     for index, prediction in enumerate(predicted_classes_eval):
                         if prediction == test_labels[index]:
@@ -182,7 +182,7 @@ class Weighting_Net(AlgorithmsABC):
 
         test_accuracy = []
 
-        time_stamps_single_pred = []
+        time_stamps_single_predict = []
 
         for task_num in range(0, final_episodes):
 
@@ -192,18 +192,18 @@ class Weighting_Net(AlgorithmsABC):
                                                    testing_sho=self.test_shots)
 
             # predictions for the task
-            eval_preds = full_pipeline_model(train_images_task, test_images_task,
-                                             self.support_train_shots, self.test_shots)
+            eval_predicts = full_pipeline_model(train_images_task, test_images_task,
+                                                self.support_train_shots, self.test_shots)
 
-            single_pred_start = time.time()
-            pred_example = np.expand_dims(test_images_task[0], 0)
-            single_pred = full_pipeline_model(train_images_task, pred_example, self.support_train_shots, 1,
-                                              multi_query=False)
-            single_pred_end = time.time()
-            time_stamps_single_pred.append(single_pred_end - single_pred_start)
+            single_prediction_start = time.time()
+            prediction_example = np.expand_dims(test_images_task[0], 0)
+            full_pipeline_model(train_images_task, prediction_example, self.support_train_shots, 1,
+                                multi_query=False)
+            single_prediction_end = time.time()
+            time_stamps_single_predict.append(single_prediction_end - single_prediction_start)
 
             predicted_classes = []
-            for prediction_sample in eval_preds:
+            for prediction_sample in eval_predicts:
                 predicted_classes.append(tf.argmax(np.asarray(prediction_sample)))
 
             num_correct_out_loop = 0
@@ -221,43 +221,6 @@ class Weighting_Net(AlgorithmsABC):
         # No adaptation training required with relational algorithms
         ms_latency = 0
 
-        ms_prediction_latency = np.mean(time_stamps_single_pred) * 1e3
+        ms_prediction_latency = np.mean(time_stamps_single_predict) * 1e3
 
         return total_accuracy, h, ms_latency, ms_prediction_latency
-
-# if __name__ == "__main__":
-#     # load standard configurations
-#     main_config_file = "../configurations/main_config.json"
-#     main_config_file = Path(main_config_file)
-#
-#     main_config = read_json(main_config_file)
-#
-#     beta1 = main_config["beta1"]
-#     beta2 = main_config["beta2"]
-#
-#     # number of inner loop episodes - mini batch tasks training. In the paper 200K
-#     episodes = main_config["episodes"]
-#
-#     # After how many meta training episodes, make an evaluation?
-#     eval_interval = main_config["eval_interval"]
-#
-#     # number of times that the experiment has to be repeated
-#     experiments_num = main_config["num_exp_repetitions"]
-#
-#     # num of box plots for evaluation
-#     num_box_plots = main_config["num_boxplots"]
-#     # number of simulations per boxplot wanted in the final plot
-#     boxes_eval = int(round(episodes / num_box_plots))
-#
-#     # inner loop - training on tasks number of shots (samples per class in mini-batch)
-#     support_train_shots = main_config["support_train_shots"]  # inner_shots
-#     # number of query shots for MAML algorithm during the training phase
-#     query_shots = main_config["query_shots"]  # IMPORTANT: USED ALSO IN EVALUATION PHASE
-#
-#     # Num of test samples for evaluation per class. Tot Samples = (num of classes * eval_test_shots). Default 1
-#     test_shots = main_config["test_shots"]
-#     # change to smooth as much as possible the bar-range plot (e.g. if 10 means 10 * num_classes)
-#     classes = main_config["classes"]
-#
-#     # number of final evaluations of the algorithm
-#     final_episodes = main_config["final_episodes_final"]

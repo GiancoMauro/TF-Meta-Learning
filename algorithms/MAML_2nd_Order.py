@@ -15,7 +15,7 @@ import numpy as np
 import tensorflow as tf
 from tensorflow import keras
 
-from algorithms.Algorithms_abc import AlgorithmsABC
+from algorithms.Algorithms_ABC import AlgorithmsABC
 from networks.conv_modules import conv_base_model
 from utils.json_functions import read_json
 from utils.statistics import mean_confidence_interval
@@ -160,7 +160,7 @@ class Maml2nd_Order(AlgorithmsABC):
                     inner_batch_counter = 0
                     epochs_counter += 1
 
-            # go back on theta parameters for the update from the previous METAITER
+            # go back on theta parameters for the update from the previous episode
             base_model.set_weights(old_vars)
 
             if (episode != 0 and episode % self.meta_batches == 0) or episode == self.episodes - 1:
@@ -168,7 +168,7 @@ class Maml2nd_Order(AlgorithmsABC):
                 # with first order optimization test tape is not over training tape
                 gradients = test_tape.gradient(query_loss_sum, base_model.trainable_variables)
                 outer_optimizer.apply_gradients(zip(gradients, base_model.trainable_variables))
-                # empty the query_loss_sum for a new cbatch
+                # empty the query_loss_sum for a new batch
                 query_loss_sum = tf.zeros(self.n_ways * self.query_shots)
 
             # Evaluation loop
@@ -280,23 +280,23 @@ class Maml2nd_Order(AlgorithmsABC):
             adaptation_start = time.time()
             for images, labels in train_set_task:
                 with tf.GradientTape() as tape:
-                    preds = base_model(images)
-                    loss = keras.losses.sparse_categorical_crossentropy(labels, preds)
+                    predicts = base_model(images)
+                    loss = keras.losses.sparse_categorical_crossentropy(labels, predicts)
                 grads = tape.gradient(loss, base_model.trainable_weights)
                 inner_optimizer.apply_gradients(zip(grads, base_model.trainable_weights))
             adaptation_end = time.time()
             time_stamps_adaptation.append(adaptation_end - adaptation_start)
             # predictions for the task
-            eval_preds = base_model.predict(test_images_task)
+            eval_predicts = base_model.predict(test_images_task)
 
-            single_pred_start = time.time()
-            pred_example = np.expand_dims(test_images_task[0], 0)
-            single_pred = base_model.predict(pred_example)
-            single_pred_end = time.time()
-            time_stamps_single_pred.append(single_pred_end - single_pred_start)
+            single_prediction_start = time.time()
+            prediction_example = np.expand_dims(test_images_task[0], 0)
+            base_model.predict(prediction_example)
+            single_prediction_end = time.time()
+            time_stamps_single_pred.append(single_prediction_end - single_prediction_start)
 
             predicted_classes = []
-            for prediction_sample in eval_preds:
+            for prediction_sample in eval_predicts:
                 predicted_classes.append(tf.argmax(np.asarray(prediction_sample)))
 
             num_correct_out_loop = 0

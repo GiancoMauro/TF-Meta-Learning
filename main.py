@@ -6,7 +6,7 @@ from pathlib import Path
 
 from algorithms.MAML_1st_Order import Maml1st_Order
 from algorithms.MAML_2nd_Order import Maml2nd_Order
-from algorithms.MAML_MSL_CA_DA import Mamlplus
+from algorithms.MAML_MSL_CA_DA import Maml_Plus
 from algorithms.MetaWeighting_Net import MetaWeighting_Net
 from algorithms.Reptile import Reptile
 from algorithms.Weighting_Net import Weighting_Net
@@ -185,7 +185,7 @@ if __name__ == "__main__":
         algorithm = Maml1st_Order(**args)
 
     elif alg_name == "maml_plus":
-        algorithm = Mamlplus(**args)
+        algorithm = Maml_Plus(**args)
 
     elif alg_name == "reptile":
         algorithm = Reptile(**args)

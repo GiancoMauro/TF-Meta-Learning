@@ -30,7 +30,7 @@ import numpy as np
 import tensorflow as tf
 from tensorflow import keras
 
-from algorithms.Algorithms_abc import AlgorithmsABC
+from algorithms.Algorithms_ABC import AlgorithmsABC
 from networks.weighting_modules import Full_Pipeline
 from utils.json_functions import read_json
 from utils.statistics import mean_confidence_interval, add_noise_images
@@ -150,10 +150,11 @@ class MetaWeighting_Net(AlgorithmsABC):
                     # Step 5
                     with tf.GradientTape() as train_tape:
 
-                        relat_pred = full_pipeline_model(support_images, noise_images, self.support_train_shots, 1,
-                                                         batch_s=num_train_shots_epoch)
+                        relational_predicts = full_pipeline_model(support_images, noise_images,
+                                                                  self.support_train_shots, 1,
+                                                                  batch_s=num_train_shots_epoch)
                         # learn the mapping
-                        train_loss = keras.losses.sparse_categorical_crossentropy(labels, relat_pred)
+                        train_loss = keras.losses.sparse_categorical_crossentropy(labels, relational_predicts)
 
                     gradients = train_tape.gradient(train_loss, full_pipeline_model.trainable_variables)
                     gradients, _ = tf.clip_by_global_norm(gradients, 0.5)
@@ -164,14 +165,15 @@ class MetaWeighting_Net(AlgorithmsABC):
                         # Step 8
                         # compute the model loss over different images (query data)
                         # evaluate model trained on theta' over the query images
-                        relat_preds = full_pipeline_model(support_images, query_images, self.support_train_shots,
-                                                          self.query_shots)
-                        query_loss = keras.losses.sparse_categorical_crossentropy(query_labels, relat_preds)
+                        relational_predicts = full_pipeline_model(support_images, query_images,
+                                                                  self.support_train_shots,
+                                                                  self.query_shots)
+                        query_loss = keras.losses.sparse_categorical_crossentropy(query_labels, relational_predicts)
                         # sum the meta loss for the outer learning every inner batch of the last epoch
                         query_loss_partial_sum = query_loss_partial_sum + query_loss
 
                         if inner_batch_counter == self.num_batches_per_inner_base_epoch - 1:
-                            # if i'm in the last inner batch, then average the query_loss_sum over the performed batches
+                            # if in the last inner batch, then average the query_loss_sum over the performed batches
                             query_loss_sum += query_loss_partial_sum / self.num_batches_per_inner_base_epoch
                             # reset the query loss partial sum over inner meta_batches
                             query_loss_partial_sum = tf.zeros(self.n_ways * self.query_shots)
@@ -200,7 +202,7 @@ class MetaWeighting_Net(AlgorithmsABC):
 
                 out_gradients = test_tape.gradient(query_loss_sum, full_pipeline_model.trainable_variables)
                 outer_optimizer.apply_gradients(zip(out_gradients, full_pipeline_model.trainable_variables))
-                # empty the query_loss_sum for a new cbatch
+                # empty the query_loss_sum for a new batch
                 query_loss_sum = tf.zeros(self.n_ways * self.query_shots)
 
             # Evaluation loop
@@ -224,11 +226,11 @@ class MetaWeighting_Net(AlgorithmsABC):
                         dataset.get_mini_dataset(self.support_train_shots, self.n_ways, test_split=True,
                                                  testing_sho=self.test_shots)
 
-                    eval_preds = full_pipeline_model(train_images_eval, test_images,
-                                                     self.support_train_shots, self.test_shots)
+                    eval_predicts = full_pipeline_model(train_images_eval, test_images,
+                                                        self.support_train_shots, self.test_shots)
 
                     predicted_classes_eval = []
-                    for prediction_sample in eval_preds:
+                    for prediction_sample in eval_predicts:
                         predicted_classes_eval.append(tf.argmax(np.asarray(prediction_sample)))
                     for index, prediction in enumerate(predicted_classes_eval):
                         if prediction == test_labels[index]:
@@ -273,18 +275,18 @@ class MetaWeighting_Net(AlgorithmsABC):
                                                    self.n_ways, test_split=True, testing_sho=self.test_shots)
 
             # predictions for the task
-            eval_preds = full_pipeline_model(train_images_task, test_images_task, self.support_train_shots,
-                                             self.test_shots)
+            eval_predicts = full_pipeline_model(train_images_task, test_images_task, self.support_train_shots,
+                                                self.test_shots)
 
-            single_pred_start = time.time()
-            pred_example = np.expand_dims(test_images_task[0], 0)
-            single_pred = full_pipeline_model(train_images_task, pred_example, self.support_train_shots, 1,
-                                              multi_query=False)
-            single_pred_end = time.time()
-            time_stamps_single_pred.append(single_pred_end - single_pred_start)
+            single_prediction_start = time.time()
+            prediction_example = np.expand_dims(test_images_task[0], 0)
+            full_pipeline_model(train_images_task, prediction_example, self.support_train_shots, 1,
+                                multi_query=False)
+            single_prediction_end = time.time()
+            time_stamps_single_pred.append(single_prediction_end - single_prediction_start)
 
             predicted_classes = []
-            for prediction_sample in eval_preds:
+            for prediction_sample in eval_predicts:
                 predicted_classes.append(tf.argmax(np.asarray(prediction_sample)))
 
             num_correct_out_loop = 0

@@ -16,7 +16,7 @@ import numpy as np
 import tensorflow as tf
 from tensorflow import keras
 
-from algorithms.Algorithms_abc import AlgorithmsABC
+from algorithms.Algorithms_ABC import AlgorithmsABC
 from networks.conv_modules import conv_base_model
 from utils.json_functions import read_json
 from utils.statistics import mean_confidence_interval
@@ -109,8 +109,8 @@ class Reptile(AlgorithmsABC):
                 # for each data batch
                 with tf.GradientTape() as tape:
                     # random initialization of weights
-                    preds = base_model(images)
-                    loss = keras.losses.sparse_categorical_crossentropy(labels, preds)
+                    predicts = base_model(images)
+                    loss = keras.losses.sparse_categorical_crossentropy(labels, predicts)
                 grads = tape.gradient(loss, base_model.trainable_weights)
                 optimizer.apply_gradients(zip(grads, base_model.trainable_weights))
             new_vars = base_model.get_weights()
@@ -151,15 +151,15 @@ class Reptile(AlgorithmsABC):
                     # Train on the samples and get the resulting accuracies.
                     for images, labels in train_set:
                         with tf.GradientTape() as tape:
-                            preds = base_model(images)
-                            loss = keras.losses.sparse_categorical_crossentropy(labels, preds)
+                            predicts = base_model(images)
+                            loss = keras.losses.sparse_categorical_crossentropy(labels, predicts)
                         grads = tape.gradient(loss, base_model.trainable_weights)
                         optimizer.apply_gradients(zip(grads, base_model.trainable_weights))
 
                     # test phase after model evaluation
-                    eval_preds = base_model.predict(test_images)
+                    eval_predicts = base_model.predict(test_images)
                     predicted_classes_eval = []
-                    for prediction_sample in eval_preds:
+                    for prediction_sample in eval_predicts:
                         predicted_classes_eval.append(tf.argmax(np.asarray(prediction_sample)))
                     for index, prediction in enumerate(predicted_classes_eval):
                         if prediction == test_labels[index]:
@@ -199,7 +199,7 @@ class Reptile(AlgorithmsABC):
         base_weights = base_model.get_weights()
 
         time_stamps_adaptation = []
-        time_stamps_single_pred = []
+        time_stamps_single_predict = []
 
         optimizer = keras.optimizers.Adam(learning_rate=self.internal_learning_rate,
                                           beta_1=self.beta1, beta_2=self.beta2)
@@ -221,23 +221,23 @@ class Reptile(AlgorithmsABC):
             adaptation_start = time.time()
             for images, labels in train_set_task:
                 with tf.GradientTape() as tape:
-                    preds = base_model(images)
-                    loss = keras.losses.sparse_categorical_crossentropy(labels, preds)
+                    predicts = base_model(images)
+                    loss = keras.losses.sparse_categorical_crossentropy(labels, predicts)
                 grads = tape.gradient(loss, base_model.trainable_weights)
                 optimizer.apply_gradients(zip(grads, base_model.trainable_weights))
             adaptation_end = time.time()
             time_stamps_adaptation.append(adaptation_end - adaptation_start)
             # predictions for the task
-            eval_preds = base_model.predict(test_images_task)
+            eval_predicts = base_model.predict(test_images_task)
 
-            single_pred_start = time.time()
-            pred_example = np.expand_dims(test_images_task[0], 0)
-            single_pred = base_model.predict(pred_example)
-            single_pred_end = time.time()
-            time_stamps_single_pred.append(single_pred_end - single_pred_start)
+            single_predict_start = time.time()
+            predict_example = np.expand_dims(test_images_task[0], 0)
+            base_model.predict(predict_example)
+            single_predict_end = time.time()
+            time_stamps_single_predict.append(single_predict_end - single_predict_start)
 
             predicted_classes = []
-            for prediction_sample in eval_preds:
+            for prediction_sample in eval_predicts:
                 predicted_classes.append(tf.argmax(np.asarray(prediction_sample)))
 
             num_correct_out_loop = 0
@@ -258,6 +258,6 @@ class Reptile(AlgorithmsABC):
 
         ms_latency = np.mean(time_stamps_adaptation) * 1e3
 
-        ms_prediction_latency = np.mean(time_stamps_single_pred) * 1e3
+        ms_prediction_latency = np.mean(time_stamps_single_predict) * 1e3
 
         return total_accuracy, h, ms_latency, ms_prediction_latency
