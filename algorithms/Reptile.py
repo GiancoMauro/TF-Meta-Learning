@@ -195,8 +195,6 @@ class Reptile(AlgorithmsABC):
         """
         ############ EVALUATION OVER FINAL TASKS ###############
 
-        ############ EVALUATION OVER FINAL TASKS ###############
-
         test_accuracy = []
 
         base_weights = base_model.get_weights()

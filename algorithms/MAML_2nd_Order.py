@@ -262,7 +262,7 @@ class Maml2nd_Order(AlgorithmsABC):
         base_weights = base_model.get_weights()
 
         time_stamps_adaptation = []
-        time_stamps_single_pred = []
+        time_stamps_single_predict = []
 
         inner_optimizer = keras.optimizers.Adam(learning_rate=
                                                 self.internal_learning_rate, beta_1=self.beta1, beta_2=self.beta2)
@@ -296,7 +296,7 @@ class Maml2nd_Order(AlgorithmsABC):
             prediction_example = np.expand_dims(test_images_task[0], 0)
             base_model.predict(prediction_example)
             single_prediction_end = time.time()
-            time_stamps_single_pred.append(single_prediction_end - single_prediction_start)
+            time_stamps_single_predict.append(single_prediction_end - single_prediction_start)
 
             predicted_classes = []
             for prediction_sample in eval_predicts:
@@ -320,6 +320,6 @@ class Maml2nd_Order(AlgorithmsABC):
 
         ms_latency = np.mean(time_stamps_adaptation) * 1e3
 
-        ms_prediction_latency = np.mean(time_stamps_single_pred) * 1e3
+        ms_prediction_latency = np.mean(time_stamps_single_predict) * 1e3
 
         return total_accuracy, h, ms_latency, ms_prediction_latency
