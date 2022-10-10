@@ -6,7 +6,7 @@
   "internal_learning_rate": 0.0008,
   "initial_outer_learning_rate": 0.0007,
   "decay_steps": 2000,
-  "conv_filters_per_layer": 128,
+  "conv_filters_per_layer": 64,
   "conv_kernel_size": 3,
   "initial_loss_weights": [
     0.02,

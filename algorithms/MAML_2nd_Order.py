@@ -16,7 +16,7 @@ import tensorflow as tf
 from tensorflow import keras
 
 from algorithms.Algorithms_ABC import AlgorithmsABC
-from networks.conv_modules import conv_base_model
+from networks.conv_modules import Conv_Dense_Module
 from utils.json_functions import read_json
 from utils.statistics import mean_confidence_interval
 
@@ -74,9 +74,7 @@ class Maml2nd_Order(AlgorithmsABC):
         :return: base_model, general_training_val_acc, general_eval_val_acc
         """
 
-        base_model = conv_base_model(self.n_ways, self.conv_filters_number, self.conv_kernel_size)
-        base_model.compile()
-        base_model.summary()
+        base_model = Conv_Dense_Module(self.n_ways, self.conv_filters_number, self.conv_kernel_size)
 
         inner_optimizer = keras.optimizers.Adam(learning_rate=self.internal_learning_rate, beta_1=self.beta1,
                                                 beta_2=self.beta2)
@@ -108,6 +106,11 @@ class Maml2nd_Order(AlgorithmsABC):
                 self.support_train_shots, self.n_ways, query_split=True,
                 query_sho=self.query_shots
             )
+            if episode == 0:
+                # init model
+                base_model.call(train_images)
+                base_model.build(train_images.shape)
+                base_model.summary()
 
             # generate tf dataset:
             mini_support_dataset = tf.data.Dataset.from_tensor_slices(

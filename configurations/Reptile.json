@@ -5,6 +5,6 @@
   "eval_train_epochs": 8,
   "internal_learning_rate": 3e-05,
   "meta_step_size": 0.4,
-  "conv_filters_per_layer": 128,
+  "conv_filters_per_layer": 64,
   "conv_kernel_size": 3
 }
