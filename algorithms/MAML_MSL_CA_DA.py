@@ -156,8 +156,8 @@ class Maml_Plus(AlgorithmsABC):
                         # Step 8
                         # compute the model loss over different images (query data)
                         # evaluate model trained on theta' over the query images
-                        query_preds = base_model(query_images)
-                        query_loss = keras.losses.sparse_categorical_crossentropy(query_labels, query_preds)
+                        query_predicts = base_model(query_images)
+                        query_loss = keras.losses.sparse_categorical_crossentropy(query_labels, query_predicts)
                         # sum the meta loss for the outer learning every N defined Meta Batches
                         query_loss_partial_sum = query_loss_partial_sum + query_loss * self.loss_weights[epochs_counter]
 
@@ -185,8 +185,8 @@ class Maml_Plus(AlgorithmsABC):
                         # Step 8
                         # compute the model loss over different images (query data)
                         # evaluate model trained on theta' over the query images
-                        query_preds = base_model(query_images)
-                        query_loss = keras.losses.sparse_categorical_crossentropy(query_labels, query_preds)
+                        query_predicts = base_model(query_images)
+                        query_loss = keras.losses.sparse_categorical_crossentropy(query_labels, query_predicts)
                         # sum the meta loss for the outer learning every N defined epochs
                         query_loss_partial_sum = query_loss_partial_sum + query_loss * self.loss_weights[epochs_counter]
                         # since the sum of the loss weights is one, no division of the query loss over inner epochs is 

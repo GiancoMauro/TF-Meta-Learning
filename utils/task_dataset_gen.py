@@ -36,8 +36,6 @@ class Dataset:
         self.dirs = []
         self.list_dirs(self.data_folder)
 
-        # self.dirs = os.listdir(self.data_folder)
-
     def list_dirs(self, root_dir):
         """
         function that generates all the sub-folders of the training/test available classes for the random subset sampling
@@ -63,12 +61,12 @@ class Dataset:
         """
         function that generates a tensor flow "mini dataset" as set of images and respective
         labels for a given or random generated task. The generated output can be provided to a Tf.tape for training
-
         :param training_sho: number of shots per task for the training set
         :param num_classes: number of ways (classes) of the task
         :param test_split: set to True whether a test split is wanted
         :param testing_sho: number of shots per task for the test set
-        :param task_labels_arr: If an array of classes is provided, the labels will not be randomly sampled. None by default.
+        :param task_labels_arr: If an array of classes is provided, the labels will not be randomly sampled.
+        (None by default).
         :param query_split: set to True whether a query split is wanted
         :param query_sho: number of shots per task for the query set
 

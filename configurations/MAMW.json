@@ -1,5 +1,5 @@
 {
-  "algorithm_name": "Meta Weighting Net",
+  "algorithm_name": "MAMW",
   "meta_batches": 1,
   "embedding_dimension": 32,
   "weighting_dimension": 64,

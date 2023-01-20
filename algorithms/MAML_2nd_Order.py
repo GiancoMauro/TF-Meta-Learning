@@ -244,7 +244,7 @@ class Maml2nd_Order(AlgorithmsABC):
                 buffer_eval_val_acc.append(accuracies[1])
 
                 if episode % 5 == 0:  # or episode % meta_batches == 0:
-                    print("batch %d: eval on train=%f eval on test=%f" % (episode, accuracies[0], accuracies[1]))
+                    print("meta batch %d: eval on train=%f eval on test=%f" % (episode, accuracies[0], accuracies[1]))
 
         return base_model, general_training_val_acc, general_eval_val_acc
 

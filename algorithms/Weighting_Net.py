@@ -2,8 +2,8 @@
 Author: Gianfranco Mauro
 Tensorflow Implementation of the algorithm:
 "Injection-Weighting-Net".
-Mauro, Martinez-Rodriguez, Ott, Servadei, Cuellar and Morales-Santos.
-"Context-Adaptable Radar-Based People Counting with Self-Learning."
+Mauro, Martinez-Rodriguez, Ott, Servadei, Wille, Cuellar and Morales-Santos.
+"Context-Adaptable Radar-Based People Counting via Few-Shot Learning."
 
 Base Implementation from pytorch versions:
 
@@ -165,7 +165,7 @@ class Weighting_Net(AlgorithmsABC):
                 buffer_eval_val_acc.append(accuracies[1])
 
                 if episode % 5 == 0:
-                    print("batch %d: eval on train=%f eval on test=%f" % (episode, accuracies[0], accuracies[1]))
+                    print("episode %d: eval on train=%f eval on test=%f" % (episode, accuracies[0], accuracies[1]))
 
         return full_pipeline_model, general_training_val_acc, general_eval_val_acc
 

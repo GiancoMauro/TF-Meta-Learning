@@ -7,7 +7,7 @@ from pathlib import Path
 from algorithms.MAML_1st_Order import Maml1st_Order
 from algorithms.MAML_2nd_Order import Maml2nd_Order
 from algorithms.MAML_MSL_CA_DA import Maml_Plus
-from algorithms.MetaWeighting_Net import MetaWeighting_Net
+from algorithms.MAMW import MAMW
 from algorithms.Reptile import Reptile
 from algorithms.Weighting_Net import Weighting_Net
 from utils.box_plot_function import generate_box_plot
@@ -29,7 +29,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="define experimental setup")
     parser.add_argument(
         "--alg",
-        help="available meta learning algorithms [weight_net, meta_weight_net, reptile, maml2nd, maml1st, maml_plus]",
+        help="available meta learning algorithms [weight_net, mamw, reptile, maml2nd, maml1st, maml_plus]",
         type=str,
         default="maml_plus"
     )
@@ -177,8 +177,8 @@ if __name__ == "__main__":
     ### INIT ALGORITHM
     if alg_name == "weight_net":  # todo add condition for injection or embedding
         algorithm = Weighting_Net(**args)
-    elif alg_name == "meta_weight_net":
-        algorithm = MetaWeighting_Net(**args)
+    elif alg_name == "mamw":
+        algorithm = MAMW(**args)
     elif alg_name == "maml2nd":
         algorithm = Maml2nd_Order(**args)
     elif alg_name == "maml1st":

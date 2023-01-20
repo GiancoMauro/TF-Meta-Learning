@@ -40,7 +40,7 @@ default parameters.
 
 - ```-- alg (Optional, str, default:weight_net)``` : Meta Algorithm, available meta learning algorithms:
     - weight_net
-    - meta_weight_net
+    - mamw
     - reptile
     - maml2nd
     - maml1st
@@ -72,7 +72,7 @@ default parameters.
 
 ### Example command
 
-```python main.py --alg=meta_weight_net --n_ways=5 --n_shots=5 --n_episodes=15000 --n_fin_episodes=5000```
+```python main.py --alg=mamw --n_ways=5 --n_shots=5 --n_episodes=15000 --n_fin_episodes=5000```
 
 # Reference algorithms
 
