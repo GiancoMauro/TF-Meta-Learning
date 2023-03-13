@@ -14,7 +14,6 @@ from pathlib import Path
 
 import numpy as np
 import tensorflow as tf
-from tensorflow import keras
 
 from algorithms.Algorithms_ABC import AlgorithmsABC
 from networks.conv_modules import Conv_Dense_Module
@@ -73,7 +72,7 @@ class Reptile(AlgorithmsABC):
         """
 
         base_model = Conv_Dense_Module(self.n_ways, self.conv_filters_number, self.conv_kernel_size)
-        optimizer = keras.optimizers.Adam(learning_rate=self.internal_learning_rate,
+        optimizer = tf.keras.optimizers.Adam(learning_rate=self.internal_learning_rate,
                                           beta_1=self.beta1, beta_2=self.beta2)
 
         general_training_val_acc = []
@@ -113,7 +112,7 @@ class Reptile(AlgorithmsABC):
                 with tf.GradientTape() as tape:
                     # random initialization of weights
                     predicts = base_model(images)
-                    loss = keras.losses.sparse_categorical_crossentropy(labels, predicts)
+                    loss = tf.keras.losses.sparse_categorical_crossentropy(labels, predicts)
                 grads = tape.gradient(loss, base_model.trainable_weights)
                 optimizer.apply_gradients(zip(grads, base_model.trainable_weights))
             new_vars = base_model.get_weights()
@@ -155,7 +154,7 @@ class Reptile(AlgorithmsABC):
                     for images, labels in train_set:
                         with tf.GradientTape() as tape:
                             predicts = base_model(images)
-                            loss = keras.losses.sparse_categorical_crossentropy(labels, predicts)
+                            loss = tf.keras.losses.sparse_categorical_crossentropy(labels, predicts)
                         grads = tape.gradient(loss, base_model.trainable_weights)
                         optimizer.apply_gradients(zip(grads, base_model.trainable_weights))
 
@@ -202,7 +201,7 @@ class Reptile(AlgorithmsABC):
         time_stamps_adaptation = []
         time_stamps_single_predict = []
 
-        optimizer = keras.optimizers.Adam(learning_rate=self.internal_learning_rate,
+        optimizer = tf.keras.optimizers.Adam(learning_rate=self.internal_learning_rate,
                                           beta_1=self.beta1, beta_2=self.beta2)
 
         for task_num in range(0, final_episodes):
@@ -223,7 +222,7 @@ class Reptile(AlgorithmsABC):
             for images, labels in train_set_task:
                 with tf.GradientTape() as tape:
                     predicts = base_model(images)
-                    loss = keras.losses.sparse_categorical_crossentropy(labels, predicts)
+                    loss = tf.keras.losses.sparse_categorical_crossentropy(labels, predicts)
                 grads = tape.gradient(loss, base_model.trainable_weights)
                 optimizer.apply_gradients(zip(grads, base_model.trainable_weights))
             adaptation_end = time.time()

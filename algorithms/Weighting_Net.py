@@ -28,7 +28,6 @@ from pathlib import Path
 
 import numpy as np
 import tensorflow as tf
-from tensorflow import keras
 
 from algorithms.Algorithms_ABC import AlgorithmsABC
 from networks.weighting_modules import Full_Pipeline
@@ -81,7 +80,7 @@ class Weighting_Net(AlgorithmsABC):
         full_pipeline_model = Full_Pipeline(self.n_ways, self.embedding_dimension, self.weighting_dim,
                                             is_injection=self.is_injection)
 
-        inner_optimizer = keras.optimizers.Adam(learning_rate=self.internal_learning_rate, beta_1=self.beta1,
+        inner_optimizer = tf.keras.optimizers.Adam(learning_rate=self.internal_learning_rate, beta_1=self.beta1,
                                                 beta_2=self.beta2)
 
         ############## WEIGHTING NET IMPLEMENTATION LOOP ##########################à
@@ -114,7 +113,7 @@ class Weighting_Net(AlgorithmsABC):
                                                          self.query_shots)
 
                 # learn the mapping
-                train_loss = keras.losses.sparse_categorical_crossentropy(query_labels, relational_predict)
+                train_loss = tf.keras.losses.sparse_categorical_crossentropy(query_labels, relational_predict)
 
             gradients = train_tape.gradient(train_loss, full_pipeline_model.trainable_variables)
             gradients, _ = tf.clip_by_global_norm(gradients, 0.5)

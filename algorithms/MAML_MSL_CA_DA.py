@@ -17,7 +17,6 @@ from pathlib import Path
 
 import numpy as np
 import tensorflow as tf
-from tensorflow import keras
 
 from algorithms.Algorithms_ABC import AlgorithmsABC
 from networks.conv_modules import Conv_Dense_Module
@@ -82,13 +81,13 @@ class Maml_Plus(AlgorithmsABC):
         :return: base_model, general_training_val_acc, general_eval_val_acc
         """
         base_model = Conv_Dense_Module(self.n_ways, self.conv_filters_number, self.conv_kernel_size)
-        inner_optimizer = keras.optimizers.Adam(learning_rate=self.internal_learning_rate, beta_1=self.beta1,
+        inner_optimizer = tf.keras.optimizers.Adam(learning_rate=self.internal_learning_rate, beta_1=self.beta1,
                                                 beta_2=self.beta2)
 
         outer_learning_rate_schedule = tf.keras.experimental.CosineDecay(self.initial_outer_learning_rate,
                                                                          self.decay_steps)
 
-        outer_optimizer = keras.optimizers.Adam(learning_rate=outer_learning_rate_schedule,
+        outer_optimizer = tf.keras.optimizers.Adam(learning_rate=outer_learning_rate_schedule,
                                                 beta_1=self.beta1, beta_2=self.beta2)
 
         ############### MAML IMPLEMENTATION LOOP ##########################à
@@ -147,7 +146,7 @@ class Maml_Plus(AlgorithmsABC):
                     # Step 5
                     with tf.GradientTape() as train_tape:
                         support_predicts = base_model(images)
-                        train_loss = keras.losses.sparse_categorical_crossentropy(labels, support_predicts)
+                        train_loss = tf.keras.losses.sparse_categorical_crossentropy(labels, support_predicts)
                     # Step 6
 
                     gradients = train_tape.gradient(train_loss, base_model.trainable_variables)
@@ -157,7 +156,7 @@ class Maml_Plus(AlgorithmsABC):
                         # compute the model loss over different images (query data)
                         # evaluate model trained on theta' over the query images
                         query_predicts = base_model(query_images)
-                        query_loss = keras.losses.sparse_categorical_crossentropy(query_labels, query_predicts)
+                        query_loss = tf.keras.losses.sparse_categorical_crossentropy(query_labels, query_predicts)
                         # sum the meta loss for the outer learning every N defined Meta Batches
                         query_loss_partial_sum = query_loss_partial_sum + query_loss * self.loss_weights[epochs_counter]
 
@@ -174,7 +173,7 @@ class Maml_Plus(AlgorithmsABC):
                         # Step 5
                         with tf.GradientTape() as train_tape:
                             support_predicts = base_model(images)
-                            train_loss = keras.losses.sparse_categorical_crossentropy(labels, support_predicts)
+                            train_loss = tf.keras.losses.sparse_categorical_crossentropy(labels, support_predicts)
 
                         # Step 6
                         gradients = train_tape.gradient(train_loss, base_model.trainable_variables)
@@ -186,7 +185,7 @@ class Maml_Plus(AlgorithmsABC):
                         # compute the model loss over different images (query data)
                         # evaluate model trained on theta' over the query images
                         query_predicts = base_model(query_images)
-                        query_loss = keras.losses.sparse_categorical_crossentropy(query_labels, query_predicts)
+                        query_loss = tf.keras.losses.sparse_categorical_crossentropy(query_labels, query_predicts)
                         # sum the meta loss for the outer learning every N defined epochs
                         query_loss_partial_sum = query_loss_partial_sum + query_loss * self.loss_weights[epochs_counter]
                         # since the sum of the loss weights is one, no division of the query loss over inner epochs is 
@@ -250,7 +249,7 @@ class Maml_Plus(AlgorithmsABC):
                     for images, labels in train_set:
                         with tf.GradientTape() as tape:
                             predicts = base_model(images)
-                            loss = keras.losses.sparse_categorical_crossentropy(labels, predicts)
+                            loss = tf.keras.losses.sparse_categorical_crossentropy(labels, predicts)
                         grads = tape.gradient(loss, base_model.trainable_weights)
                         inner_optimizer.apply_gradients(zip(grads, base_model.trainable_weights))
 
@@ -295,7 +294,7 @@ class Maml_Plus(AlgorithmsABC):
         time_stamps_adaptation = []
         time_stamps_single_predict = []
 
-        inner_optimizer = keras.optimizers.Adam(learning_rate=self.internal_learning_rate,
+        inner_optimizer = tf.keras.optimizers.Adam(learning_rate=self.internal_learning_rate,
                                                 beta_1=self.beta1, beta_2=self.beta2)
 
         for task_num in range(0, final_episodes):
@@ -316,7 +315,7 @@ class Maml_Plus(AlgorithmsABC):
             for images, labels in train_set_task:
                 with tf.GradientTape() as tape:
                     preds = base_model(images)
-                    loss = keras.losses.sparse_categorical_crossentropy(labels, preds)
+                    loss = tf.keras.losses.sparse_categorical_crossentropy(labels, preds)
                 grads = tape.gradient(loss, base_model.trainable_weights)
                 inner_optimizer.apply_gradients(zip(grads, base_model.trainable_weights))
             adaptation_end = time.time()

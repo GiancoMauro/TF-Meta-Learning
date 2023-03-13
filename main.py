@@ -151,7 +151,7 @@ if __name__ == "__main__":
             # up to the second-last iteration
             xbox_labels.append(str(multiple) + "-" + str(xbox_multiples[counter + 1] - 1))
 
-    print("Box Plots: " + str(xbox_labels))
+    print("Generated Box Plots: {}".format(str(xbox_labels)))
 
     # LOAD DATASET CONFIGURATIONS
 

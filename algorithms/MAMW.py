@@ -28,7 +28,6 @@ from pathlib import Path
 
 import numpy as np
 import tensorflow as tf
-from tensorflow import keras
 
 from algorithms.Algorithms_ABC import AlgorithmsABC
 from networks.weighting_modules import Full_Pipeline
@@ -94,10 +93,10 @@ class MAMW(AlgorithmsABC):
         full_pipeline_model = Full_Pipeline(self.n_ways, self.embedding_dimension, self.weighting_dim,
                                             is_injection=self.is_injection)
 
-        inner_optimizer = keras.optimizers.Adam(learning_rate=self.internal_learning_rate, beta_1=self.beta1,
+        inner_optimizer = tf.keras.optimizers.Adam(learning_rate=self.internal_learning_rate, beta_1=self.beta1,
                                                 beta_2=self.beta2)
 
-        outer_optimizer = keras.optimizers.Adam(learning_rate=self.outer_learning_rate, beta_1=self.beta1,
+        outer_optimizer = tf.keras.optimizers.Adam(learning_rate=self.outer_learning_rate, beta_1=self.beta1,
                                                 beta_2=self.beta2)
 
         ############## WEIGHTING NET IMPLEMENTATION LOOP ##########################à
@@ -154,7 +153,7 @@ class MAMW(AlgorithmsABC):
                                                                   self.support_train_shots, 1,
                                                                   batch_s=num_train_shots_epoch)
                         # learn the mapping
-                        train_loss = keras.losses.sparse_categorical_crossentropy(labels, relational_predicts)
+                        train_loss = tf.keras.losses.sparse_categorical_crossentropy(labels, relational_predicts)
 
                     gradients = train_tape.gradient(train_loss, full_pipeline_model.trainable_variables)
                     gradients, _ = tf.clip_by_global_norm(gradients, 0.5)
@@ -168,7 +167,7 @@ class MAMW(AlgorithmsABC):
                         relational_predicts = full_pipeline_model(support_images, query_images,
                                                                   self.support_train_shots,
                                                                   self.query_shots)
-                        query_loss = keras.losses.sparse_categorical_crossentropy(query_labels, relational_predicts)
+                        query_loss = tf.keras.losses.sparse_categorical_crossentropy(query_labels, relational_predicts)
                         # sum the meta loss for the outer learning every inner batch of the last epoch
                         query_loss_partial_sum = query_loss_partial_sum + query_loss
 
