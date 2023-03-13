@@ -4,7 +4,7 @@ import numpy as np
 def generate_text_logs(alg_name, new_directory, xbox_labels, meta_iters, train_eval_boxes, test_eval_boxes,
                        general_training_val_acc, general_eval_val_acc):
     """
-    functions that produces a logs in regards to the box range plots according to the
+    functions that produces a logs in regard to the box range plots according to the
     achieved results over meta iterations (both for training and test evaluations)
 
     :param alg_name: name of the algorithm from the specific .json file
@@ -41,7 +41,7 @@ def generate_text_logs(alg_name, new_directory, xbox_labels, meta_iters, train_e
 
         train_values += current_plot + ", mean:" + str(round(mean, 2) * 100) + "% \n"
 
-    train_values += "\n Quartiles: \n"
+    train_values += "\n Quartiles and Whiskers: \n"
 
     for plot_counter, current_train_list in enumerate(general_training_val_acc):
         current_plot = xbox_labels[plot_counter]
@@ -83,7 +83,7 @@ def generate_text_logs(alg_name, new_directory, xbox_labels, meta_iters, train_e
 
         test_values += current_plot + ", mean:" + str(round(mean, 2) * 100) + "% \n"
 
-    test_values += "\n Quartiles & Whiskers: \n"
+    test_values += "\n Quartiles and Whiskers: \n"
 
     for plot_counter, current_test_list in enumerate(general_eval_val_acc):
         current_plot = xbox_labels[plot_counter]

@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 
 
-def generate_box_plot(config, alg_name, classes, meta_iters, new_directory, xbox_labels,
+def generate_box_plot(config, alg_name, classes, episodes, new_directory, xbox_labels,
                       general_training_val_acc, general_eval_val_acc):
     """
     Functions that saves as a figure the trend of box range plots over meta iteration time
@@ -9,7 +9,7 @@ def generate_box_plot(config, alg_name, classes, meta_iters, new_directory, xbox
     :param config: configuration file used for the simulation
     :param alg_name: name of the algorithm from the specific .json file
     :param classes: number of classes of the meta-task
-    :param meta_iters: number of meta_iterations on which the model has been trained
+    :param episodes: number of meta_iterations on which the model has been trained
     :param new_directory: directory where the plot has to be saved
     :param xbox_labels: labels of the box plots that will be generated
     :param general_training_val_acc: list of accuracy values obtained on training validation
@@ -51,7 +51,7 @@ def generate_box_plot(config, alg_name, classes, meta_iters, new_directory, xbox
         ax.yaxis.grid(True, linestyle='dashed', color="#C0C0C0")
         ax.set_xticklabels(xbox_labels)
 
-    # change colors and style of the boxplots
+    # change colors and style of the boxplot
 
     ## EVAL TRAIN STYLES
     for box in train_eval_boxes['boxes']:
@@ -94,6 +94,7 @@ def generate_box_plot(config, alg_name, classes, meta_iters, new_directory, xbox
     for patch in test_eval_boxes['boxes']:
         patch.set_facecolor(face_colors[1])
 
-    plt.savefig(new_directory + "/" + algorithm_name + str(meta_iters) + "_iterations_box_range.pdf", dpi=400)
+    bor_range_save_path = "{}/{}{}_iterations_box_range.pdf".format(new_directory, algorithm_name, str(episodes))
+    plt.savefig(bor_range_save_path, dpi=400)
 
     return train_eval_boxes, test_eval_boxes

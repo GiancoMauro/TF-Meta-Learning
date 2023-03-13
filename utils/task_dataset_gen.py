@@ -143,8 +143,6 @@ class Dataset:
                 images_to_split = np.array([np.expand_dims(np.array(plt.imread(local_folder + "/" + indx)), -1)
                                             for indx in rand_indexes])
 
-                # encode the images through the var autoencoder, then normalize the parameters in the range -1 to 1
-
                 # take just one shot of samples of the k + eval shots taken
                 # all the images except from the last ones go in training:
                 few_shot_train_images[class_idx * training_sho: (class_idx + 1) * training_sho

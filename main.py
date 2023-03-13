@@ -31,7 +31,7 @@ if __name__ == "__main__":
         "--alg",
         help="available meta learning algorithms [weight_net, mamw, reptile, maml2nd, maml1st, maml_plus]",
         type=str,
-        default="maml_plus"
+        default="weight_net"
     )
     parser.add_argument(
         "--n_ways",
@@ -55,7 +55,7 @@ if __name__ == "__main__":
         "--n_episodes",
         help="number of episodes of the experiment [10, 100, 1000, 22000, ...]",
         type=int,
-        default=200  # 22000
+        default=20  # 22000
     )
     parser.add_argument(
         "--n_query",
@@ -190,9 +190,7 @@ if __name__ == "__main__":
     elif alg_name == "reptile":
         algorithm = Reptile(**args)
     else:
-        # todo define specific Assert for wrong algorithm name etc..
-        algorithm = []
-        input()
+        raise ValueError("{} not in the list of available algorithms".format(alg_name))
 
     # add general variables to a main configuration for the log files
     main_config = {**algorithm.spec_config.copy(), **args}
@@ -208,8 +206,9 @@ if __name__ == "__main__":
         if not os.path.exists("results/"):
             os.mkdir("results/")
 
-        new_directory = "results/" + alg_name + "_" + str(n_shots) + "_Shots_" + str(n_ways) + "_Ways_" + \
-                        str(n_episodes) + "_Episodes_" + str(repeat) + "_simul_num"
+        new_directory = "results/{}_{}_Shots_{}_Ways_{}_Episodes_{}_simul_num".format(alg_name, str(n_shots),
+                                                                                      str(n_ways), str(n_episodes),
+                                                                                      str(repeat))
 
         if not os.path.exists(new_directory):
             os.mkdir(new_directory)
@@ -223,15 +222,16 @@ if __name__ == "__main__":
                 # find the last existing repetition of the simulation
                 list_existing_folders.append(int(str(directory)[-11]))
 
-            simul_repeat_dir = max(list_existing_folders) + 10
-            new_directory = "results/" + alg_name + "_" + str(n_shots) + "_Shots_" + str(n_ways) + "_Ways_" + \
-                            str(n_episodes) + "_Episodes_" + str(simul_repeat_dir) + "_simul_num"
+            simulation_repeat_dir = max(list_existing_folders) + 10
+            new_directory = "{}{}_simul_num".format(new_directory, str(simulation_repeat_dir))
+
             os.mkdir(new_directory)
 
         # SAVE MODEL:
 
-        base_model.save_weights(
-            new_directory + "/full_model_weights_" + alg_name + "_" + str(n_episodes) + ".h5")
+        weights_save_path =  "{}/full_model_weights_{}_{}.h5".format(new_directory, alg_name, str(n_episodes))
+
+        base_model.save_weights(weights_save_path)
 
         #######################
         main_config_file_name = new_directory + "/" + "config.json"
@@ -259,18 +259,17 @@ if __name__ == "__main__":
         # FINAL TRAINING/TESTING ON EPISODES AFTER GENERALIZATION TRAINING
         total_accuracy, h, ms_latency, ms_pred_latency = algorithm.final_evaluation(base_model, n_fin_episodes)
 
-        final_accuracy_filename = alg_name + str(n_fin_episodes) + " Test_Tasks_Final_Accuracy.txt"
+        final_accuracy_filename = "{}{}  Test_Tasks_Final_Accuracy.txt".format(alg_name, str(n_fin_episodes))
 
-        final_accuracy_string = "The average accuracy on: " + str(
-            n_fin_episodes) + " Test Tasks, with: " + str(
-            n_tests) + "samples per class, is: " + str(
-            total_accuracy) + "% with a 95% confidence interval of +- " + str(h * 100) + "%"
+        final_accuracy_string = \
+            "The average accuracy on: {} Test Tasks, with: {} samples per class, is: {}% with a " \
+            "95% confidence interval of +- {}%".format(str(n_fin_episodes), n_tests, str(total_accuracy),
+                                                       str(round(h * 100, 3)))
 
-        final_accuracy_string += "\n" + "The latency time for a final training is: " \
-                                 + str(ms_latency) + " milliseconds"
+        final_accuracy_string += "\n The latency time for a final training is: {} milliseconds".format(str(ms_latency))
 
-        final_accuracy_string += "\n" + "The latency time for a single prediction is: " \
-                                 + str(ms_pred_latency) + " milliseconds"
+        final_accuracy_string += "\n The latency time for a single prediction is: " \
+                                 "{} milliseconds".format(str(ms_pred_latency))
 
         with open(new_directory + "/" + final_accuracy_filename, "w") as text_file:
             text_file.write(final_accuracy_string)
