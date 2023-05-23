@@ -128,7 +128,7 @@ if __name__ == "__main__":
     # num of box plots for evaluation
     n_box_plots = int(parser_args.n_box_plots)
 
-    results_dir = str(parser_args.results_dir) + "\\"
+    results_dir = str(parser_args.results_dir) + "/"
 
     print("Currently Running {}, with {} support and {} tests shots. {}-Way.".format(alg_name, n_shots,
                                                                                         n_tests, n_ways))
@@ -224,10 +224,14 @@ if __name__ == "__main__":
             list_existing_folders = []
             for directory in list(filtered):
                 # find the last existing repetition of the simulation
-                list_existing_folders.append(int(str(directory)[-11]))
+                pattern = r"Episodes_(\d+)_sim"
+                match = re.search(pattern, directory)
+                list_existing_folders.append(int(match.group(1)))
 
-            simulation_repeat_dir = max(list_existing_folders) + 10
-            new_directory = "{}{}_sim_num".format(new_directory, str(simulation_repeat_dir))
+            simulation_repeat_dir = max(list_existing_folders) + 100
+            new_directory = "{}{}_{}_Shots_{}_Ways_{}_Episodes_{}_sim_num".format(results_dir, alg_name, str(n_shots),
+                                                                                  str(n_ways), str(n_episodes),
+                                                                                  str(simulation_repeat_dir))
 
             os.mkdir(new_directory)
 

@@ -49,7 +49,7 @@ class Dataset:
         for it in os.scandir(root_dir):
             if it.is_dir():
                 if folder_exp is None or folder_exp in it.path:
-                    splits = it.path.split('\\')
+                    splits = it.path.replace("\\", "/").split("/")
                     path_name = splits[-2] + "/" + splits[-1]
                     self.dirs.append(path_name)
                 self.list_dirs(it)
@@ -60,7 +60,7 @@ class Dataset:
     ):
         """
         function that generates a tensor flow "mini dataset" as set of images and respective
-        labels for a given or random generated task. The generated output can be provided to a Tf.tape for training
+        labels for a given or random generated task. The generated output can be provided to a "Tf.tape" for training
         :param training_sho: number of shots per task for the training set
         :param num_classes: number of ways (classes) of the task
         :param test_split: set to True whether a test split is wanted
@@ -109,8 +109,8 @@ class Dataset:
                 # sample random elements to open from the folder
                 rand_indexes = random.sample(os.listdir(local_folder), k=training_sho + testing_sho
                                              )
-                images_to_split = np.array([np.expand_dims(np.array(plt.imread(local_folder + "/" + indx)), -1)
-                                            for indx in rand_indexes])
+                images_to_split = np.array([np.expand_dims(np.array(plt.imread(local_folder + "/" + index)), -1)
+                                            for index in rand_indexes])
 
                 # take just one shot of samples of the k + eval shots taken
                 # all the images except from the last one go in training:
@@ -124,8 +124,8 @@ class Dataset:
                 few_shot_query_labels[class_idx * query_sho: (class_idx + 1) * query_sho] = class_idx
 
                 rand_indexes = random.sample(os.listdir(local_folder), k=training_sho + query_sho)
-                images_to_split = np.array([np.expand_dims(np.array(plt.imread(local_folder + "/" + indx)), -1)
-                                            for indx in rand_indexes])
+                images_to_split = np.array([np.expand_dims(np.array(plt.imread(local_folder + "/" + index)), -1)
+                                            for index in rand_indexes])
 
                 # take just one shot of samples of the k + eval shots taken
                 # all the images except from the last one go in training:
@@ -140,8 +140,8 @@ class Dataset:
                 few_shot_query_labels[class_idx * query_sho: (class_idx + 1) * query_sho] = class_idx
                 # during the evaluation phase I need both query and test split
                 rand_indexes = random.sample(os.listdir(local_folder), k=training_sho + testing_sho + query_sho)
-                images_to_split = np.array([np.expand_dims(np.array(plt.imread(local_folder + "/" + indx)), -1)
-                                            for indx in rand_indexes])
+                images_to_split = np.array([np.expand_dims(np.array(plt.imread(local_folder + "/" + index)), -1)
+                                            for index in rand_indexes])
 
                 # take just one shot of samples of the k + eval shots taken
                 # all the images except from the last ones go in training:
@@ -159,8 +159,8 @@ class Dataset:
                 # necessary number of images.
                 # without splitting, use all the images for training
                 rand_indexes = random.sample(os.listdir(local_folder), k=training_sho)
-                trn_images = np.array([np.expand_dims(np.array(plt.imread(local_folder + "/" + indx)), -1)
-                                       for indx in rand_indexes])
+                trn_images = np.array([np.expand_dims(np.array(plt.imread(local_folder + "/" + index)), -1)
+                                       for index in rand_indexes])
                 few_shot_train_images[class_idx * training_sho: (class_idx + 1) * training_sho] = trn_images
 
         # If it's the final task, then get the dataset
