@@ -10,7 +10,7 @@ def generate_boxplot_vs_normal_dist(config, alg_name, new_directory, episodes, x
     :param config: configuration file used for the simulation
     :param alg_name: name of the algorithm from the specific .json file
     :param new_directory: directory where the plot has to be saved
-    :param episodes: number of meta_iterations on which the model has been trained
+    :param episodes: number of episodes on which the model has been trained
     :param xbox_labels: labels of the box plots that will be generated
     :param classes: number of classes of the meta-task
     :param general_eval_val_acc: list of accuracy values obtained on testing validation

@@ -5,12 +5,12 @@ def generate_text_logs(alg_name, new_directory, xbox_labels, meta_iters, train_e
                        general_training_val_acc, general_eval_val_acc):
     """
     functions that produces a logs in regard to the box range plots according to the
-    achieved results over meta iterations (both for training and test evaluations)
+    achieved results over episodes (both for training and test evaluations)
 
     :param alg_name: name of the algorithm from the specific .json file
     :param new_directory: directory where the plot has to be saved
     :param xbox_labels: labels of the box plots that will be generated
-    :param meta_iters: number of meta_iterations on which the model has been trained
+    :param meta_iters: number of episodes on which the model has been trained
     :param train_eval_boxes: box plots computed over training meta tasks
     :param test_eval_boxes: box plots computed over test meta tasks
     :param general_training_val_acc: list of accuracy values obtained on training validation

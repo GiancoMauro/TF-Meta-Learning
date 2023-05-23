@@ -126,7 +126,7 @@ class Weighting_Net(AlgorithmsABC):
             if episode % self.eval_interval == 0:
                 if (episode in self.xbox_multiples or episode == self.episodes - 1) and episode != 0:
                     # when I have enough samples for a box of the box-range plot, add these values to the general list
-                    # condition: the meta iter is a multiple of the x_box multiples or last iteration and episode is
+                    # condition: the episode is a multiple of the x_box multiples or last iteration and episode is
                     # not 0.
                     general_training_val_acc.append(buffer_training_val_acc)
                     general_eval_val_acc.append(buffer_eval_val_acc)

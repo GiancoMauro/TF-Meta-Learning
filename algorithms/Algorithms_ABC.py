@@ -6,7 +6,7 @@ class AlgorithmsABC(ABC):
         """
 
     def __init__(self, alg, n_shots, n_ways, n_episodes, n_query, n_tests, train_dataset, test_dataset,
-                 n_repeats, n_box_plots, eval_step, beta1, beta2, xbox_multiples, n_fin_episodes):
+                 n_repeats, n_box_plots, eval_step, beta1, beta2, xbox_multiples, n_fin_episodes, results_dir):
         # print(kwargs)
         # self.__dict__.update(kwargs)
         self.alg = alg
@@ -20,6 +20,7 @@ class AlgorithmsABC(ABC):
         self.train_dataset = train_dataset
         self.test_dataset = test_dataset
         self.final_episodes = n_fin_episodes
+        self.results_dir = results_dir
 
         self.n_ways = n_ways
         self.support_train_shots = n_shots

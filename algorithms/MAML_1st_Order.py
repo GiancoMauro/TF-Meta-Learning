@@ -152,7 +152,7 @@ class Maml1st_Order(AlgorithmsABC):
 
                             # sum the meta loss for the outer learning every N defined Meta Batches
                             if (episode != 0 and episode % self.meta_batches == 0) or episode == self.episodes - 1:
-                                # if I'm at the last meta iter of my batch of meta-tasks
+                                # if I'm at the last episode of my batch of meta-tasks
                                 # divide the sum of query losses by the number of meta batches
                                 # IMPORTANT: by graphs properties in Tensorflow,
                                 # this operation has to be done in the gradient loop,
@@ -179,7 +179,7 @@ class Maml1st_Order(AlgorithmsABC):
             if episode % self.eval_interval == 0:
                 if (episode in self.xbox_multiples or episode == self.episodes - 1) and episode != 0:
                     # when I have enough samples for a box of the box-range plot, add these values to the general
-                    # list condition: the meta iter is a multiple of the x_box multiples or last iteration and
+                    # list condition: the episode is a multiple of the x_box multiples or last iteration and
                     # episode is not 0.
                     general_training_val_acc.append(buffer_training_val_acc)
                     general_eval_val_acc.append(buffer_eval_val_acc)

@@ -69,7 +69,7 @@ class Maml_Plus(AlgorithmsABC):
             self.num_batches_per_inner_base_epoch = round(
                 (self.n_ways * self.support_train_shots) / self.batch_size) + 1
 
-        # total number of batches for every meta iteration: needed for BNRS + BNWB
+        # total number of batches for every episode: needed for BNRS + BNWB
         self.tot_num_base_batches = self.base_train_epochs * self.num_batches_per_inner_base_epoch
 
         self.alg_name += str(self.n_ways) + "_Classes_"
@@ -220,7 +220,7 @@ class Maml_Plus(AlgorithmsABC):
             if episode % self.eval_interval == 0:
                 if (episode in self.xbox_multiples or episode == self.episodes - 1) and episode != 0:
                     # when I have enough samples for a box of the box-range plot, add these values to the general
-                    # list condition: the meta iter is a multiple of the x_box multiples or last iteration and
+                    # list condition: the episode is a multiple of the x_box multiples or last iteration and
                     # episode is not 0.
                     general_training_val_acc.append(buffer_training_val_acc)
                     general_eval_val_acc.append(buffer_eval_val_acc)

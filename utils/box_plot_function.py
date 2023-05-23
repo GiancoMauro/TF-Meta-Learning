@@ -4,12 +4,12 @@ import matplotlib.pyplot as plt
 def generate_box_plot(config, alg_name, classes, episodes, new_directory, xbox_labels,
                       general_training_val_acc, general_eval_val_acc):
     """
-    Functions that saves as a figure the trend of box range plots over meta iteration time
+    Functions that saves as a figure the trend of box range plots over time
 
     :param config: configuration file used for the simulation
     :param alg_name: name of the algorithm from the specific .json file
     :param classes: number of classes of the meta-task
-    :param episodes: number of meta_iterations on which the model has been trained
+    :param episodes: number of episodes on which the model has been trained
     :param new_directory: directory where the plot has to be saved
     :param xbox_labels: labels of the box plots that will be generated
     :param general_training_val_acc: list of accuracy values obtained on training validation
@@ -40,9 +40,9 @@ def generate_box_plot(config, alg_name, classes, episodes, new_directory, xbox_l
 
     axs[0].set_title("Evaluation on Training Set", fontsize=title_font_size)
     axs[1].set_title("Evaluation on Test Set", fontsize=title_font_size)
-    axs[0].set_xlabel("Box Plots - Set Of Meta Iterations", fontsize=labels_font_size)
+    axs[0].set_xlabel("Box Plots - Set Of Episodes", fontsize=labels_font_size)
     axs[0].set_ylabel("Accuracy over " + str(classes) + " classes", fontsize=labels_font_size)
-    axs[1].set_xlabel("Box Plots - Set Of Meta Iterations", fontsize=labels_font_size)
+    axs[1].set_xlabel("Box Plots - Set Of Episodes", fontsize=labels_font_size)
     axs[1].set_ylabel("Accuracy over " + str(classes) + " classes", fontsize=labels_font_size)
 
     for ax in axs:

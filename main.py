@@ -26,7 +26,7 @@ Main script in root folder for running the experiments from terminal
 
 if __name__ == "__main__":
 
-    parser = argparse.ArgumentParser(description="define experimental setup")
+    parser = argparse.ArgumentParser(description="Define Experimental Setup")
     parser.add_argument(
         "--alg",
         help="available meta learning algorithms [weight_net, mamw, reptile, maml2nd, maml1st, maml_plus]",
@@ -99,30 +99,38 @@ if __name__ == "__main__":
         type=int,
         default=10  # 10000,
     )
+    parser.add_argument(
+        "--results_dir",
+        help="name of the subdirectory where to save the results",
+        type=str,
+        default= "results"
+    )
     # todo define also loss function and take out beta_1 and 2 as parameters
 
-    name_args = parser.parse_args()
+    parser_args = parser.parse_args()
 
-    args = vars(name_args)
+    args = vars(parser_args)
 
-    alg_name = name_args.alg
+    alg_name = parser_args.alg
     # inner loop - training on tasks number of shots (samples per class in mini-batch)
-    n_shots = int(name_args.n_shots)
+    n_shots = int(parser_args.n_shots)
     # number of ways of the experiment
-    n_ways = int(name_args.n_ways)
+    n_ways = int(parser_args.n_ways)
     # Num of test samples for evaluation per class. Tot Samples = (num of classes * eval_test_shots).
-    n_tests = int(name_args.n_tests)
+    n_tests = int(parser_args.n_tests)
     # number of inner loop episodes - mini batch tasks training.
-    n_episodes = int(name_args.n_episodes)
+    n_episodes = int(parser_args.n_episodes)
 
     # number of final evaluations of the algorithm
-    n_fin_episodes = int(name_args.n_fin_episodes)
+    n_fin_episodes = int(parser_args.n_fin_episodes)
     # number of times that the experiment has to be repeated
-    n_repeats = int(name_args.n_repeats)
+    n_repeats = int(parser_args.n_repeats)
     # num of box plots for evaluation
-    n_box_plots = int(name_args.n_box_plots)
+    n_box_plots = int(parser_args.n_box_plots)
 
-    print("Currently Running {}, with {} support and {} tests shots. {} n-ways.".format(alg_name, n_shots,
+    results_dir = str(parser_args.results_dir) + "\\"
+
+    print("Currently Running {}, with {} support and {} tests shots. {}-Way.".format(alg_name, n_shots,
                                                                                         n_tests, n_ways))
 
     # number of simulations per boxplot wanted in the final plot
@@ -163,7 +171,7 @@ if __name__ == "__main__":
     train_dataset = Dataset(training=True, config=dataset_config, classes=n_ways)
     test_dataset = Dataset(training=False, config=dataset_config, classes=n_ways)
 
-    # add dataset and boxplots multiples to dictionary
+    # add dataset and box plots multiples to dictionary
     args["train_dataset"] = train_dataset
     args["test_dataset"] = test_dataset
     args["xbox_multiples"] = xbox_multiples
@@ -199,23 +207,19 @@ if __name__ == "__main__":
 
         base_model, training_val_acc, eval_val_acc = algorithm.train_and_evaluate()
 
-        # SAVE MODEL AND LOG FILES
-        # create sim_directories
-        # assume that no other equal simulations exist
+        # todo SAVE MODEL AND LOG FILES
+        if not os.path.exists(results_dir):
+            os.mkdir(results_dir)
 
-        if not os.path.exists("results/"):
-            os.mkdir("results/")
-
-        new_directory = "results/{}_{}_Shots_{}_Ways_{}_Episodes_{}_simul_num".format(alg_name, str(n_shots),
-                                                                                      str(n_ways), str(n_episodes),
-                                                                                      str(repeat))
+        new_directory = "{}{}_{}_Shots_{}_Ways_{}_Episodes_{}_sim_num".format(results_dir, alg_name, str(n_shots),
+                                                                              str(n_ways), str(n_episodes),
+                                                                              str(repeat))
 
         if not os.path.exists(new_directory):
             os.mkdir(new_directory)
         else:
-            # todo this can be improved with regular expressions
-            Pattern = re.compile(new_directory[8:-10])
-            folder_list = os.listdir("results/")
+            Pattern = re.compile(new_directory[len(results_dir):])
+            folder_list = os.listdir(results_dir)
             filtered = [folder for folder in folder_list if Pattern.match(folder)]
             list_existing_folders = []
             for directory in list(filtered):
@@ -223,7 +227,7 @@ if __name__ == "__main__":
                 list_existing_folders.append(int(str(directory)[-11]))
 
             simulation_repeat_dir = max(list_existing_folders) + 10
-            new_directory = "{}{}_simul_num".format(new_directory, str(simulation_repeat_dir))
+            new_directory = "{}{}_sim_num".format(new_directory, str(simulation_repeat_dir))
 
             os.mkdir(new_directory)
 
@@ -257,7 +261,7 @@ if __name__ == "__main__":
                            training_val_acc, eval_val_acc)
 
         # FINAL TRAINING/TESTING ON EPISODES AFTER GENERALIZATION TRAINING
-        total_accuracy, h, ms_latency, ms_pred_latency = algorithm.final_evaluation(base_model, n_fin_episodes)
+        total_accuracy, h, ms_latency, ms_predict_latency = algorithm.final_evaluation(base_model, n_fin_episodes)
 
         final_accuracy_filename = "{}{}  Test_Tasks_Final_Accuracy.txt".format(alg_name, str(n_fin_episodes))
 
@@ -269,7 +273,7 @@ if __name__ == "__main__":
         final_accuracy_string += "\n The latency time for a final training is: {} milliseconds".format(str(ms_latency))
 
         final_accuracy_string += "\n The latency time for a single prediction is: " \
-                                 "{} milliseconds".format(str(ms_pred_latency))
+                                 "{} milliseconds".format(str(ms_predict_latency))
 
         with open(new_directory + "/" + final_accuracy_filename, "w") as text_file:
             text_file.write(final_accuracy_string)
