@@ -26,18 +26,18 @@ def generate_text_logs(alg_name, new_directory, xbox_labels, meta_iters, train_e
     # Train Plots VALUES:
     train_values += "TRAIN VALUES \n\nMedian Values: \n"
 
-    for plot_counter, medline_train in enumerate(train_eval_boxes["medians"]):
+    for plot_counter, med_line_train in enumerate(train_eval_boxes["medians"]):
         current_plot = xbox_labels[plot_counter]
-        linedata = medline_train.get_ydata()
-        median = linedata[0]
+        line_data = med_line_train.get_ydata()
+        median = line_data[0]
         train_values += current_plot + ", median:" + str(round(median, 2) * 100) + "% \n"
 
     train_values += "\nAverage Values: \n"
 
-    for plot_counter, avgline_train in enumerate(train_eval_boxes["means"]):
+    for plot_counter, avg_line_train in enumerate(train_eval_boxes["means"]):
         current_plot = xbox_labels[plot_counter]
-        linedata = avgline_train.get_ydata()
-        mean = linedata[0]
+        line_data = avg_line_train.get_ydata()
+        mean = line_data[0]
 
         train_values += current_plot + ", mean:" + str(round(mean, 2) * 100) + "% \n"
 
@@ -68,18 +68,18 @@ def generate_text_logs(alg_name, new_directory, xbox_labels, meta_iters, train_e
 
     test_values += "TEST VALUES \n\nMedian Values: \n"
 
-    for plot_counter, medline_test in enumerate(test_eval_boxes["medians"]):
+    for plot_counter, med_line_test in enumerate(test_eval_boxes["medians"]):
         current_plot = xbox_labels[plot_counter]
-        linedata = medline_test.get_ydata()
-        median = linedata[0]
+        line_data = med_line_test.get_ydata()
+        median = line_data[0]
         test_values += current_plot + ", median:" + str(round(median, 2) * 100) + "% \n"
 
     test_values += "\nAverage Values: \n"
 
-    for plot_counter, avgline_test in enumerate(test_eval_boxes["means"]):
+    for plot_counter, avg_line_test in enumerate(test_eval_boxes["means"]):
         current_plot = xbox_labels[plot_counter]
-        linedata = avgline_test.get_ydata()
-        mean = linedata[0]
+        line_data = avg_line_test.get_ydata()
+        mean = line_data[0]
 
         test_values += current_plot + ", mean:" + str(round(mean, 2) * 100) + "% \n"
 

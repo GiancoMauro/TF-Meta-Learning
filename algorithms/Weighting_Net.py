@@ -191,7 +191,7 @@ class Weighting_Net(AlgorithmsABC):
                                                    testing_sho=self.test_shots)
 
             # predictions for the task
-            eval_predicts = full_pipeline_model(train_images_task, test_images_task,
+            eval_predicts_fin = full_pipeline_model(train_images_task, test_images_task,
                                                 self.support_train_shots, self.test_shots)
 
             single_prediction_start = time.time()
@@ -202,7 +202,7 @@ class Weighting_Net(AlgorithmsABC):
             time_stamps_single_predict.append(single_prediction_end - single_prediction_start)
 
             predicted_classes = []
-            for prediction_sample in eval_predicts:
+            for prediction_sample in eval_predicts_fin:
                 predicted_classes.append(tf.argmax(np.asarray(prediction_sample)))
 
             num_correct_out_loop = 0

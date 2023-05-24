@@ -125,8 +125,8 @@ class Maml1st_Order(AlgorithmsABC):
             for images, labels in mini_support_dataset:
                 # Step 5
                 with tf.GradientTape() as train_tape:
-                    support_preds = base_model(images)
-                    train_loss = tf.keras.losses.sparse_categorical_crossentropy(labels, support_preds)
+                    support_predicts = base_model(images)
+                    train_loss = tf.keras.losses.sparse_categorical_crossentropy(labels, support_predicts)
                 # Step 6
 
                 gradients = train_tape.gradient(train_loss, base_model.trainable_variables)
@@ -139,8 +139,8 @@ class Maml1st_Order(AlgorithmsABC):
                         # Step 8
                         # compute the model loss over different images (query data)
                         # evaluate model trained on theta' over the query images
-                        query_preds = base_model(query_images)
-                        query_loss = tf.keras.losses.sparse_categorical_crossentropy(query_labels, query_preds)
+                        query_predicts = base_model(query_images)
+                        query_loss = tf.keras.losses.sparse_categorical_crossentropy(query_labels, query_predicts)
                         # sum the meta loss for the outer learning every inner batch of the last epoch
                         query_loss_partial_sum = query_loss_partial_sum + query_loss
 
@@ -262,7 +262,7 @@ class Maml1st_Order(AlgorithmsABC):
         base_weights = base_model.get_weights()
 
         time_stamps_adaptation = []
-        time_stamps_single_pred = []
+        time_stamps_single_predict = []
 
         inner_optimizer = tf.keras.optimizers.Adam(learning_rate=
                                                 self.internal_learning_rate, beta_1=self.beta1, beta_2=self.beta2)
@@ -291,16 +291,16 @@ class Maml1st_Order(AlgorithmsABC):
             adaptation_end = time.time()
             time_stamps_adaptation.append(adaptation_end - adaptation_start)
             # predictions for the task
-            eval_predicts = base_model.predict(test_images_task)
+            eval_predicts_fin = base_model.predict(test_images_task)
 
             single_prediction_start = time.time()
             prediction_example = np.expand_dims(test_images_task[0], 0)
             base_model.predict(prediction_example)
             single_prediction_end = time.time()
-            time_stamps_single_pred.append(single_prediction_end - single_prediction_start)
+            time_stamps_single_predict.append(single_prediction_end - single_prediction_start)
 
             predicted_classes = []
-            for prediction_sample in eval_predicts:
+            for prediction_sample in eval_predicts_fin:
                 predicted_classes.append(tf.argmax(np.asarray(prediction_sample)))
 
             num_correct_out_loop = 0
@@ -321,6 +321,6 @@ class Maml1st_Order(AlgorithmsABC):
 
         ms_latency = np.mean(time_stamps_adaptation) * 1e3
 
-        ms_prediction_latency = np.mean(time_stamps_single_pred) * 1e3
+        ms_prediction_latency = np.mean(time_stamps_single_predict) * 1e3
 
         return total_accuracy, h, ms_latency, ms_prediction_latency

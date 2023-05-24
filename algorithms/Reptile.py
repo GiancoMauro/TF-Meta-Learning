@@ -136,7 +136,7 @@ class Reptile(AlgorithmsABC):
 
                 accuracies = []
                 for dataset in (self.train_dataset, self.test_dataset):
-                    # set it to zero for validation and then test)
+                    # set it to zero for validation and then test
                     num_correct = 0
                     # Sample a mini dataset from the full dataset.
                     train_images_eval, train_labels_eval, test_images, test_labels, task_labels = \
@@ -228,7 +228,7 @@ class Reptile(AlgorithmsABC):
             adaptation_end = time.time()
             time_stamps_adaptation.append(adaptation_end - adaptation_start)
             # predictions for the task
-            eval_predicts = base_model.predict(test_images_task)
+            eval_predicts_fin = base_model.predict(test_images_task)
 
             single_predict_start = time.time()
             predict_example = np.expand_dims(test_images_task[0], 0)
@@ -237,7 +237,7 @@ class Reptile(AlgorithmsABC):
             time_stamps_single_predict.append(single_predict_end - single_predict_start)
 
             predicted_classes = []
-            for prediction_sample in eval_predicts:
+            for prediction_sample in eval_predicts_fin:
                 predicted_classes.append(tf.argmax(np.asarray(prediction_sample)))
 
             num_correct_out_loop = 0

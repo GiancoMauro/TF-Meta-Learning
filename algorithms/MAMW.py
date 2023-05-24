@@ -1,7 +1,7 @@
 """
 Author: Gianfranco Mauro
 Tensorflow Implementation of the algorithm:
-"Meta-Weighting-Net".
+"Model-Agnostic Meta-Weighting (MAMW)".
 Mauro, Martinez-Rodriguez, Ott, Servadei, Wille, Cuellar and Morales-Santos.
 "Context-Adaptable Radar-Based People Counting via Few-Shot Learning."
 
@@ -264,7 +264,7 @@ class MAMW(AlgorithmsABC):
 
         test_accuracy = []
 
-        time_stamps_single_pred = []
+        time_stamps_single_predict = []
 
         for task_num in range(0, final_episodes):
 
@@ -274,7 +274,7 @@ class MAMW(AlgorithmsABC):
                                                    self.n_ways, test_split=True, testing_sho=self.test_shots)
 
             # predictions for the task
-            eval_predicts = full_pipeline_model(train_images_task, test_images_task, self.support_train_shots,
+            eval_predicts_fin = full_pipeline_model(train_images_task, test_images_task, self.support_train_shots,
                                                 self.test_shots)
 
             single_prediction_start = time.time()
@@ -282,10 +282,10 @@ class MAMW(AlgorithmsABC):
             full_pipeline_model(train_images_task, prediction_example, self.support_train_shots, 1,
                                 multi_query=False)
             single_prediction_end = time.time()
-            time_stamps_single_pred.append(single_prediction_end - single_prediction_start)
+            time_stamps_single_predict.append(single_prediction_end - single_prediction_start)
 
             predicted_classes = []
-            for prediction_sample in eval_predicts:
+            for prediction_sample in eval_predicts_fin:
                 predicted_classes.append(tf.argmax(np.asarray(prediction_sample)))
 
             num_correct_out_loop = 0
@@ -303,6 +303,6 @@ class MAMW(AlgorithmsABC):
         # No adaptation training required with relational algorithms
         ms_latency = 0
 
-        ms_prediction_latency = np.mean(time_stamps_single_pred) * 1e3
+        ms_prediction_latency = np.mean(time_stamps_single_predict) * 1e3
 
         return total_accuracy, h, ms_latency, ms_prediction_latency

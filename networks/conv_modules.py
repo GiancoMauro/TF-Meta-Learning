@@ -35,7 +35,6 @@ class Conv_Dense_Module(tf.keras.Model, ABC):
         """
         super(Conv_Dense_Module, self).__init__()
 
-        # inputs = tf.keras.layers.Input(shape=(x_size_image, y_size_image, channels))
         self.layer1 = conv_bn(filter_num=round(conv_filters_number / 2), kern_size=conv_kernel_size)
         self.layer2 = conv_bn(filter_num=conv_filters_number, kern_size=conv_kernel_size)
         self.layer3 = conv_bn(filter_num=round(conv_filters_number * 2), kern_size=conv_kernel_size)
@@ -43,8 +42,8 @@ class Conv_Dense_Module(tf.keras.Model, ABC):
         self.out = tf.keras.layers.Dense(n_ways, activation="softmax")
 
     def call(self, inp):
-        # input shape: (?, dataset_config["x_size_image"], dataset_config["y_size_image"],
-        # dataset_config["image_channels"])
+        # input shape:
+        # (?, dataset_config["x_size_image"], dataset_config["y_size_image"], dataset_config["image_channels"])
         out = self.layer1(inp)
         out = self.layer2(out)
         out = self.layer3(out)

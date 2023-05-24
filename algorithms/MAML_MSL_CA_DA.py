@@ -321,7 +321,7 @@ class Maml_Plus(AlgorithmsABC):
             adaptation_end = time.time()
             time_stamps_adaptation.append(adaptation_end - adaptation_start)
             # predictions for the task
-            eval_predicts = base_model.predict(test_images_task)
+            eval_predicts_fin = base_model.predict(test_images_task)
 
             single_prediction_start = time.time()
             prediction_example = np.expand_dims(test_images_task[0], 0)
@@ -330,7 +330,7 @@ class Maml_Plus(AlgorithmsABC):
             time_stamps_single_predict.append(single_prediction_end - single_prediction_start)
 
             predicted_classes = []
-            for prediction_sample in eval_predicts:
+            for prediction_sample in eval_predicts_fin:
                 predicted_classes.append(tf.argmax(np.asarray(prediction_sample)))
 
             num_correct_out_loop = 0

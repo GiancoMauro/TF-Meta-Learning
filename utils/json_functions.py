@@ -36,8 +36,8 @@ def read_json(file_name):
     with file.open('r') as fp:
         try:
             return json.load(fp)
-        except json.decoder.JSONDecodeError as excp:
-            raise json.decoder.JSONDecodeError(f'File: {file}', excp.doc, excp.pos) from excp
+        except json.decoder.JSONDecodeError as exception:
+            raise json.decoder.JSONDecodeError(f'File: {file}', exception.doc, exception.pos) from exception
 
 def generate_config_to_save(config_file):
     """ Eliminate redundant information from the main experiment configuration, while making it more compact.

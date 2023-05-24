@@ -20,15 +20,15 @@ def mean_confidence_interval(data, confidence=0.95):
     return m, h
 
 
-def add_noise_images(imgs):
+def add_noise_images(images):
     """
-    function that adds an epsilon of gaussian noise to the imgs samples
+    function that adds an epsilon of gaussian noise to the images samples
     """
-    row, col, ch = imgs[0].shape
+    row, col, ch = images[0].shape
     mean = 0
     var = 0.005
     sigma = var ** 0.5
     gauss = np.random.normal(mean, sigma, (row, col, ch))
     gauss = gauss.reshape((row, col, ch))
-    noisy = imgs + gauss
+    noisy = images + gauss
     return noisy
