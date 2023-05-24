@@ -55,8 +55,8 @@ class Dataset:
                 self.list_dirs(it)
 
     def get_mini_dataset(
-            self, training_sho, num_classes, test_split=False, testing_sho=1,
-            task_labels_arr=None, query_split=False, query_sho=1
+            self, training_sho, num_classes, test_split=False,
+            testing_sho=1, query_split=False, query_sho=1
     ):
         """
         function that generates a tensor flow "mini dataset" as set of images and respective
@@ -65,9 +65,7 @@ class Dataset:
         :param num_classes: number of ways (classes) of the task
         :param test_split: set to True whether a test split is wanted
         :param testing_sho: number of shots per task for the test set
-        :param task_labels_arr: If an array of classes is provided, the labels will not be randomly sampled.
-        (None by default).
-        :param query_split: set to True whether a query split is wanted
+        :param query_split: to be set to True whether a query split is wanted
         :param query_sho: number of shots per task for the query set
 
         :return: tf.dataset ready for training plus images and labels for query and test sets
@@ -87,12 +85,7 @@ class Dataset:
 
         # Get a random subset of num_classes labels from the entire label set.
 
-        if task_labels_arr is None:
-            label_subset = random.sample(self.dirs, k=num_classes)
-
-        else:
-            # already provided ones such as the final task
-            label_subset = self.classes_tags[np.asarray(task_labels_arr)]
+        label_subset = random.sample(self.dirs, k=num_classes)
 
         num_labels = np.asarray([self.classes_tags.index(elem) for elem in label_subset])
 
@@ -163,11 +156,6 @@ class Dataset:
                                        for index in rand_indexes])
                 few_shot_train_images[class_idx * training_sho: (class_idx + 1) * training_sho] = trn_images
 
-        # If it's the final task, then get the dataset
-        if test_split and task_labels_arr is not None:
-            return few_shot_train_images, few_shot_train_labels, \
-                   few_shot_test_images, few_shot_test_labels, num_labels
-
         if test_split and not query_split:
             return few_shot_train_images, few_shot_train_labels, few_shot_test_images, \
                    few_shot_test_labels, num_labels
@@ -177,6 +165,5 @@ class Dataset:
         if test_split and query_split:
             return few_shot_train_images, few_shot_train_labels, few_shot_test_images, \
                    few_shot_test_labels, few_shot_query_images, few_shot_query_labels, num_labels
-
         else:
-            return None
+            raise NotImplementedError
