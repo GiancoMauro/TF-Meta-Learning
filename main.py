@@ -12,7 +12,7 @@ from algorithms.Reptile import Reptile
 from algorithms.Weighting_Net import Weighting_Net
 from utils.box_plot_function import generate_box_plot
 from utils.boxplots_vs_normal_distr_function import generate_boxplot_vs_normal_dist
-from utils.json_functions import read_json
+from utils.json_functions import read_json, generate_config_to_save
 from utils.task_dataset_gen import Dataset
 from utils.text_log_function import generate_text_logs
 
@@ -105,7 +105,6 @@ if __name__ == "__main__":
         type=str,
         default= "results"
     )
-    # todo define also loss function and take out beta_1 and 2 as parameters
 
     parser_args = parser.parse_args()
 
@@ -186,7 +185,7 @@ if __name__ == "__main__":
     plot_config = read_json(plot_config_file)
 
     ### INIT ALGORITHM
-    if alg_name == "weight_net":  # todo add condition for injection or embedding
+    if alg_name == "weight_net":
         algorithm = Weighting_Net(**args)
     elif alg_name == "mamw":
         algorithm = MAMW(**args)
@@ -210,7 +209,6 @@ if __name__ == "__main__":
 
         base_model, training_val_acc, eval_val_acc = algorithm.train_and_evaluate()
 
-        # todo SAVE MODEL AND LOG FILES
         if not os.path.exists(results_dir):
             os.mkdir(results_dir)
 
@@ -239,7 +237,6 @@ if __name__ == "__main__":
             os.mkdir(new_directory)
 
         # SAVE MODEL:
-
         weights_save_path =  "{}/full_model_weights_{}_{}.h5".format(new_directory, alg_name, str(n_episodes))
 
         base_model.save_weights(weights_save_path)
@@ -248,9 +245,10 @@ if __name__ == "__main__":
         main_config_file_name = new_directory + "/" + "config.json"
 
         # SAVE CONFIGURATION FILES:
-
+        # avoid repetition of information in the saved config
+        experiment_config_save = generate_config_to_save(main_config)
         with open(main_config_file_name, 'w') as f:
-            json.dump(main_config, f, indent=4, default=lambda obj: obj.__dict__)
+            json.dump(experiment_config_save, f, indent=4, default=lambda obj: obj.__dict__)
 
         ## GENERATE BOX PLOTS FOR TRAINING AND EVALUATION
 
@@ -270,7 +268,7 @@ if __name__ == "__main__":
         # FINAL TRAINING/TESTING ON EPISODES AFTER GENERALIZATION TRAINING
         total_accuracy, h, ms_latency, ms_predict_latency = algorithm.final_evaluation(base_model, n_fin_episodes)
 
-        final_accuracy_filename = "{}{}  Test_Tasks_Final_Accuracy.txt".format(alg_name, str(n_fin_episodes))
+        final_accuracy_filename = "{}{} Test_Tasks_Final_Accuracy.txt".format(alg_name, str(n_fin_episodes))
 
         final_accuracy_string = \
             "The average accuracy on: {} Test Tasks, with: {} samples per class, is: {}% with a " \
@@ -285,7 +283,7 @@ if __name__ == "__main__":
         with open(new_directory + "/" + final_accuracy_filename, "w") as text_file:
             text_file.write(final_accuracy_string)
 
-    # todo: check for names for injection and embedding
+    # todo: todo define also loss function and take out beta_1 and 2 as parameters
     # todo: define parser for injection/embedding and config file
     # todo: maybe use main Alg script for the final episodes functions
     # todo: save into a log losses results after experiments

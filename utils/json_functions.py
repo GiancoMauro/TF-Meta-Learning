@@ -38,3 +38,22 @@ def read_json(file_name):
             return json.load(fp)
         except json.decoder.JSONDecodeError as excp:
             raise json.decoder.JSONDecodeError(f'File: {file}', excp.doc, excp.pos) from excp
+
+def generate_config_to_save(config_file):
+    """ Eliminate redundant information from the main experiment configuration, while making it more compact.
+
+    :param config_file: main experiment configuration file to be processed
+    :return: adjusted configuration file
+    """
+    config_file["dataset"] = config_file["train_dataset"].__dict__.copy()
+    config_file["dataset"]["data_folder_train"] = config_file["dataset"]["data_folder"]
+    config_file["dataset"].update(config_file["test_dataset"].__dict__)
+    config_file["dataset"]["data_folder_test"] = config_file["dataset"]["data_folder"]
+    config_file["dataset"].pop("data_folder")
+    config_file.pop("train_dataset")
+    config_file.pop("test_dataset")
+    config_file["dataset"].pop("classes_tags")
+    config_file["dataset"].pop("dirs")
+    config_file["dataset"].pop("classes")
+
+    return config_file
