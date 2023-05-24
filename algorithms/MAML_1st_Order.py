@@ -270,7 +270,7 @@ class Maml1st_Order(AlgorithmsABC):
         for task_num in range(0, final_episodes):
 
             print("final task num: " + str(task_num))
-            train_images_task, train_labels_task, test_images_task, test_labels_task, task_labs = \
+            train_images_task, train_labels_task, test_images_task, test_labels_task, _ = \
                 self.test_dataset.get_mini_dataset(self.support_train_shots, self.n_ways,
                                                    test_split=True, testing_sho=self.test_shots)
 

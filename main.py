@@ -168,6 +168,9 @@ if __name__ == "__main__":
 
     dataset_config = read_json(dataset_config_file)
 
+    # initialize classes tags
+    # dataset_config["classes_tags"] = []
+
     train_dataset = Dataset(training=True, config=dataset_config, classes=n_ways)
     test_dataset = Dataset(training=False, config=dataset_config, classes=n_ways)
 

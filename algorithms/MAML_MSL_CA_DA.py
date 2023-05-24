@@ -161,7 +161,7 @@ class Maml_Plus(AlgorithmsABC):
                         query_loss_partial_sum = query_loss_partial_sum + query_loss * self.loss_weights[epochs_counter]
 
                         if inner_batches_counter == self.num_batches_per_inner_base_epoch - 1:
-                            # if i'm in the last inner batch, then average the query_loss_sum over the performed batches
+                            # if in the last inner batch, then average the query_loss_sum over the performed batches
                             query_loss_sum += query_loss_partial_sum / self.num_batches_per_inner_base_epoch
                             # reset the query loss partial sum over inner meta_batches
                             query_loss_partial_sum = tf.zeros(self.n_ways * self.query_shots)
@@ -192,7 +192,7 @@ class Maml_Plus(AlgorithmsABC):
                         # needed 
 
                         if inner_batches_counter == self.num_batches_per_inner_base_epoch - 1:
-                            # if i'm in the last inner batch, then average the query_loss_sum over the performed batches
+                            # if in the last inner batch, then average the query_loss_sum over the performed batches
                             query_loss_sum += query_loss_partial_sum / self.num_batches_per_inner_base_epoch
                             # reset the query loss partial sum over inner inner_batches
                             query_loss_partial_sum = tf.zeros(self.n_ways * self.query_shots)
@@ -300,7 +300,7 @@ class Maml_Plus(AlgorithmsABC):
         for task_num in range(0, final_episodes):
 
             print("final task num: " + str(task_num))
-            train_images_task, train_labels_task, test_images_task, test_labels_task, task_labs = \
+            train_images_task, train_labels_task, test_images_task, test_labels_task, _ = \
                 self.test_dataset.get_mini_dataset(self.support_train_shots, self.n_ways,
                                                    test_split=True, testing_sho=self.test_shots)
 
@@ -314,8 +314,8 @@ class Maml_Plus(AlgorithmsABC):
             adaptation_start = time.time()
             for images, labels in train_set_task:
                 with tf.GradientTape() as tape:
-                    preds = base_model(images)
-                    loss = tf.keras.losses.sparse_categorical_crossentropy(labels, preds)
+                    predicts = base_model(images)
+                    loss = tf.keras.losses.sparse_categorical_crossentropy(labels, predicts)
                 grads = tape.gradient(loss, base_model.trainable_weights)
                 inner_optimizer.apply_gradients(zip(grads, base_model.trainable_weights))
             adaptation_end = time.time()
