@@ -23,23 +23,28 @@ class Dataset:
         self.y_size_image = config["y_size_image"]
         self.channels = config["image_channels"]
         self.classes = classes
-        self.classes_tags = config["classes_tags"]
         self.dataset_name = config["name_dataset"]
 
         self.gen_labels = [str(lab) for lab in range(self.classes)]
 
+        self.training_dirs = []
+        self.test_dirs = []
+        self.list_dirs(config["training_data_folder"], self.training_dirs)
+        self.list_dirs(config["test_data_folder"], self.test_dirs)
+        self.classes_tags = self.training_dirs + self.test_dirs
+
         if training:
             self.data_folder = config["training_data_folder"]
-        else:
+            self.dirs = self.training_dirs
+        else: # test
             self.data_folder = config["test_data_folder"]
+            self.dirs = self.test_dirs
 
-        self.dirs = []
-        self.list_dirs(self.data_folder)
-
-    def list_dirs(self, root_dir, subdir_levels=5):
+    def list_dirs(self, root_dir, dirs_tags, subdir_levels=5):
         """
         function that generates all the sub-folders of the training/test available classes for the random subset sampling
         root_dir: main directory
+        dirs_tags: list where to store all the generated classes tags for the dataset
         subdir_levels: number of subdirectory levels to the dataset classes
         (default 5: e.g. data/omniglot/training/Alphabet_of_the_Magi/character01)
         """
@@ -49,8 +54,8 @@ class Dataset:
                 splits = it.path.replace("\\", "/").split("/")
                 if len(splits) == subdir_levels:
                     path_name = '/'.join(splits[-2:])  # Join the last two components of the split path
-                    self.dirs.append(path_name)
-                self.list_dirs(it.path)
+                    dirs_tags.append(path_name)
+                self.list_dirs(it.path, dirs_tags)
 
     def get_mini_dataset(
             self, training_sho, num_classes, test_split=False,
