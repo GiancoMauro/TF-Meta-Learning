@@ -36,23 +36,21 @@ class Dataset:
         self.dirs = []
         self.list_dirs(self.data_folder)
 
-    def list_dirs(self, root_dir):
+    def list_dirs(self, root_dir, subdir_levels=5):
         """
         function that generates all the sub-folders of the training/test available classes for the random subset sampling
         root_dir: main directory
+        subdir_levels: number of subdirectory levels to the dataset classes
+        (default 5: e.g. data/omniglot/training/Alphabet_of_the_Magi/character01)
         """
-
-        folder_exp = None
-        if "Omniglot" in self.dataset_name:
-            folder_exp = "character"
 
         for it in os.scandir(root_dir):
             if it.is_dir():
-                if folder_exp is None or folder_exp in it.path:
-                    splits = it.path.replace("\\", "/").split("/")
-                    path_name = splits[-2] + "/" + splits[-1]
+                splits = it.path.replace("\\", "/").split("/")
+                if len(splits) == subdir_levels:
+                    path_name = '/'.join(splits[-2:])  # Join the last two components of the split path
                     self.dirs.append(path_name)
-                self.list_dirs(it)
+                self.list_dirs(it.path)
 
     def get_mini_dataset(
             self, training_sho, num_classes, test_split=False,
