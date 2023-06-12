@@ -2,9 +2,35 @@
 
 A collection of both optimization-based and relation-based meta-learning algorithms developed on TensorFlow.
 
-# Weighting-Injection and Meta-Weighting Nets
+# Weighting-Injection Net and Model-Agnostic Meta-Weighting
 
-ADD INFO PAPER
+Codes relative to the paper:
+
+"Context-Adaptable Radar-Based People Counting via Few-Shot Learning" accepted by the [Springer Applied Intelligence Journal](https://www.springer.com/journal/10489) in June 2023.
+
+Authors: Mauro, Martinez-Rodriguez, Ott, Servadei, Wille, Cuellar and Morales-Santos
+
+# Reference algorithms
+
+Reptile:
+Nichol, Alex, Joshua Achiam, and John
+Schulman. ["On first-order meta-learning algorithms."](https://arxiv.org/abs/1803.02999), arXiv preprint arXiv:
+1803.02999). Partial re implementation of:
+ADMoreau. ["Few-Shot learning with Reptile."](https://keras.io/examples/vision/reptile/).
+
+MAML (1st and 2nd order):
+Finn, Chelsea, Pieter Abbeel, and Sergey
+Levine. ["Model-agnostic meta-learning for fast adaptation of deep networks."](https://arxiv.org/abs/1703.03400),
+International conference on machine learning. PMLR, 2017.
+
+MAML+MSL+CA+DA:
+Antoniou, Antreas, Harri Edwards, and Amos Storkey. ["How to train your MAML."](https://arxiv.org/abs/1810.09502),
+Seventh International Conference on Learning Representations. 2019.
+The following contributes from the paper have been implemented in this tensorflow version of MAML:
+
+1. Multi-Step Loss Optimization (MSL)
+2. Cosine Annealing of Meta-Optimizer Learning Rate (CA)
+3. Derivative-Order Annealing (DA)
 
 # Requirements
 
@@ -67,31 +93,10 @@ default parameters.
 
 - ```-- beta2 (Optional, float, default:0.5)``` : beta2 parameter for Adam [0, 0.1, 0.2, 0.5, 1].
 
-- ```-- n_fin_episodes (Optional, int, default:10000)``` : number of final test episodes (after generalization
-  learning)[10, 100, 1000, 10000].
+- ```-- n_fin_episodes (Optional, int, default:10000)``` : number of final test episodes after generalization 
+  learning [10, 100, 1000, 10000, ...].
+- ```--results_dir (Optional, str, default:results)``` : name of the subdirectory where to save the results.
 
 ### Example command
 
-```python main.py --alg=mamw --n_ways=5 --n_shots=5 --n_episodes=15000 --n_fin_episodes=5000```
-
-# Reference algorithms
-
-Reptile:
-Nichol, Alex, Joshua Achiam, and John
-Schulman. ["On first-order meta-learning algorithms."](https://arxiv.org/abs/1803.02999), arXiv preprint arXiv:
-1803.02999). Partial re implementation of:
-ADMoreau. ["Few-Shot learning with Reptile."](https://keras.io/examples/vision/reptile/).
-
-MAML (1st and 2nd order):
-Finn, Chelsea, Pieter Abbeel, and Sergey
-Levine. ["Model-agnostic meta-learning for fast adaptation of deep networks."](https://arxiv.org/abs/1703.03400),
-International conference on machine learning. PMLR, 2017.
-
-MAML+MSL+CA+DA:
-Antoniou, Antreas, Harri Edwards, and Amos Storkey. ["How to train your MAML."](https://arxiv.org/abs/1810.09502),
-Seventh International Conference on Learning Representations. 2019.
-The following contributes from the paper have been implemented in this tensorflow version of MAML:
-
-1. Multi-Step Loss Optimization (MSL)
-2. Cosine Annealing of Meta-Optimizer Learning Rate (CA)
-3. Derivative-Order Annealing (DA)
+```python main.py --alg=mamw --n_ways=5 --n_shots=5 --n_episodes=22000 --n_fin_episodes=10000```

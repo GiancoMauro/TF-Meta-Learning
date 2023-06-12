@@ -43,7 +43,7 @@ if __name__ == "__main__":
         "--n_shots",
         help="number of shots of the experiment [1, 2, 5, 10, ...]",
         type=int,
-        default=1
+        default=5
     )
     parser.add_argument(
         "--n_tests",
@@ -55,7 +55,7 @@ if __name__ == "__main__":
         "--n_episodes",
         help="number of episodes of the experiment [10, 100, 1000, 22000, ...]",
         type=int,
-        default=20  # 22000
+        default=22000
     )
     parser.add_argument(
         "--n_query",
@@ -67,13 +67,13 @@ if __name__ == "__main__":
         "--n_repeats",
         help="number of repetitions of the experiment [1, 2, 5, 10, ...]",
         type=int,
-        default=1
+        default=3
     )
     parser.add_argument(
         "--n_box_plots",
         help="number of box plots for the final accuracy plotting [2, 5, 10, ...]",
         type=int,
-        default=2,  # 10,
+        default=10,
     )
     parser.add_argument(
         "--eval_step",
@@ -97,7 +97,7 @@ if __name__ == "__main__":
         "--n_fin_episodes",
         help="number of final test episodes (after generalization learning)[10, 100, 1000, 10000]",
         type=int,
-        default=10  # 10000,
+        default=10000,
     )
     parser.add_argument(
         "--results_dir",
@@ -246,7 +246,7 @@ if __name__ == "__main__":
 
         # SAVE CONFIGURATION FILES:
         # avoid repetition of information in the saved config
-        experiment_config_save = generate_config_to_save(main_config)
+        experiment_config_save = generate_config_to_save(main_config.copy())
         with open(main_config_file_name, 'w') as f:
             json.dump(experiment_config_save, f, indent=4, default=lambda obj: obj.__dict__)
 
