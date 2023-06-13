@@ -102,3 +102,14 @@ default parameters.
 ### Example command
 
 ```python main.py --alg=mamw --n_ways=5 --n_shots=5 --n_episodes=22000 --n_fin_episodes=10000```
+
+
+### Results examples
+
+Each directory containing the results of a single experiment will include a figure of boxplots vs. evaluation episodes.
+Red plots represent the evaluation on sampled training tasks. Blue plots instead, represent the evaluation on sampled test tasks.
+Each box plot is constructed on the accuracy statistic of a sequence of N episodes. 
+This value is generated with respect to the value defined for the "--n_episodes" and "--n_box_plots" arguments.
+Median and Average values are stored in the results.txt files.
+Here following is an example for a Weighting-Injection Net 5-way 5-shots (Omniglot).
+![plot](./example_plots/box_plot_example.png)
