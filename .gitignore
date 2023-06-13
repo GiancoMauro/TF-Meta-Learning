@@ -16,3 +16,8 @@ utils/generate_omniglot_tags.py
 utils/boxplots_vs_normal_distr_function.py
 networks/weighting_modules_feature_size_14.py
 networks/weighting_modules_feature_size_9.py
+.idea/workspace.xml
+.idea/vcs.xml
+.idea/TF Meta Learning.iml
+.idea/inspectionProfiles/Project_Default.xml
+.idea/inspectionProfiles/profiles_settings.xml
