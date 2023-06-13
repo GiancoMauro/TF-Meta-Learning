@@ -50,6 +50,8 @@ The data can be downloaded from the repository : [Omniglot data](https://github.
 The data in the archive files "images_background.zip" and
 "images_evaluation.zip" should be unzipped and placed directly as sub-folders in ```/data"```.
 
+The radar data, utilized in "Context-Adaptable Radar-Based People Counting via Few-Shot Learning" are not publicly available due to internal company board~policy (Infineon Technologies AG).
+
 # Prerequisites
 
 - Run ```pip install -r  requirements.txt ```
