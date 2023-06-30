@@ -4,11 +4,10 @@ A collection of both optimization-based and relation-based meta-learning algorit
 
 # Weighting-Injection Net and Model-Agnostic Meta-Weighting
 
-Codes relative to the paper:
+Codes relative to a paper accepted by the [Springer Applied Intelligence Journal](https://www.springer.com/journal/10489) in June 2023.
+Main Author: Gianfranco Mauro
 
-"Context-Adaptable Radar-Based People Counting via Few-Shot Learning" accepted by the [Springer Applied Intelligence Journal](https://www.springer.com/journal/10489) in June 2023.
-
-Authors: Mauro, Martinez-Rodriguez, Ott, Servadei, Wille, Cuellar and Morales-Santos
+Further information will be added after the final paper publication.
 
 # Reference algorithms
 
