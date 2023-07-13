@@ -1,5 +1,6 @@
-Copyright 2012 The Obvious Corporation and contributors.
-<http://obvious.com/>
+Copyright © Gianfranco Mauro 2023
+
+Copyright© Infineon Technologies AG 2023: algorithms/MAMW, algorithms/Weighting_Net
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.

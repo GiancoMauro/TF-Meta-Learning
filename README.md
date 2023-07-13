@@ -2,7 +2,7 @@
 
 A collection of both optimization-based and relation-based meta-learning algorithms developed on TensorFlow.
 
-# Weighting-Injection Net and Model-Agnostic Meta-Weighting
+# Weighting-Injection Net and Model-Agnostic Meta-Weighting (MAMW)
 
 Codes relative to a paper accepted by the [Springer Applied Intelligence Journal](https://www.springer.com/journal/10489) in June 2023.
 Main Author: Gianfranco Mauro
@@ -49,7 +49,8 @@ The data can be downloaded from the repository : [Omniglot data](https://github.
 The data in the archive files "images_background.zip" and
 "images_evaluation.zip" should be unzipped and placed directly as sub-folders in ```/data"```.
 
-The radar data, utilized in "Context-Adaptable Radar-Based People Counting via Few-Shot Learning" are not publicly available due to internal company board~policy (Infineon Technologies AG).
+The radar data, utilized in "Context-Adaptable Radar-Based People Counting via Few-Shot Learning", 
+are not publicly available due to internal company board~policy (Infineon Technologies AG).
 
 # Prerequisites
 
