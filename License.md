@@ -1,6 +1,11 @@
-Copyright © Gianfranco Mauro 2023
+Copyright © Infineon Technologies AG, 2023.
 
-Copyright© Infineon Technologies AG 2023: algorithms/MAMW, algorithms/Weighting_Net
+Author: Gianfranco Mauro, 2023.
+Open Access Publication for Journal Paper.
+
+The MAML, Reptile, and Weighting Network algorithms,
+represent implementations of the relative paper pseudocodes.
+Information about every algorithm is given in the specific implementations in ./algorithms.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
