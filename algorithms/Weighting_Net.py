@@ -4,6 +4,7 @@ Tensorflow Implementation of the algorithm:
 "Injection-Weighting-Net".
 Mauro, Martinez-Rodriguez, Ott, Servadei, Wille, Cuellar and Morales-Santos.
 "Context-Adaptable Radar-Based People Counting via Few-Shot Learning."
+Springer Applied Intelligence (2023).
 
 Base Implementation from pytorch versions:
 

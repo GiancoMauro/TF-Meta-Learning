@@ -2,12 +2,14 @@
 
 A collection of both optimization-based and relation-based meta-learning algorithms developed on TensorFlow.
 
-# Weighting-Injection Net and Model-Agnostic Meta-Weighting (MAMW)
-
-Codes relative to a paper accepted by the [Springer Applied Intelligence Journal](https://www.springer.com/journal/10489) in June 2023.
 Main Author: Gianfranco Mauro
 
-Further information will be added after the final paper publication.
+# Weighting-Injection Net and Model-Agnostic Meta-Weighting (MAMW)
+
+Codes relative to:
+
+Mauro, G., Martinez-Rodriguez, I., Ott, J. et al. 
+[Context-adaptable radar-based people counting via few-shot learning.](https://doi.org/10.1007/s10489-023-04778-z) Appl Intell (2023). DOI: 10.1007/s10489-023-04778-z. 
 
 # Reference algorithms
 
@@ -15,7 +17,7 @@ Reptile:
 Nichol, Alex, Joshua Achiam, and John
 Schulman. ["On first-order meta-learning algorithms."](https://arxiv.org/abs/1803.02999), arXiv preprint arXiv:
 1803.02999). Partial re implementation of:
-ADMoreau. ["Few-Shot learning with Reptile."](https://keras.io/examples/vision/reptile/).
+ADMoreau. ["Few-Shot learning with Reptile."](https://keras.io/examples/vision/reptile/)
 
 MAML (1st and 2nd order):
 Finn, Chelsea, Pieter Abbeel, and Sergey

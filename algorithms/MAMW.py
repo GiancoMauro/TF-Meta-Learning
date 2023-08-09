@@ -4,6 +4,7 @@ Tensorflow Implementation of the algorithm:
 "Model-Agnostic Meta-Weighting (MAMW)".
 Mauro, Martinez-Rodriguez, Ott, Servadei, Wille, Cuellar and Morales-Santos.
 "Context-Adaptable Radar-Based People Counting via Few-Shot Learning."
+Springer Applied Intelligence (2023).
 
 Base Implementation from pytorch versions:
 
